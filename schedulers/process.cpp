@@ -1,17 +1,28 @@
+
+
+
 class Process {
     private:
         int process_ID;
-        int burst_time;
+        int burst_time;                     
         int remaining_time = burst_time;    // Para RR
         int priority;                       // Para Priority
         int max_time;                       // Para RealTime
+        int deadline;                       // Para RealTime
+        int remaining_deadline;             // Para RealTime
+        int period;                         // Para RealTime
 
-        Process(int process_ID, int burst_time = 0, int priority = 0, int max_time = 0) {
+        Process(int process_ID, int burst_time = 0, int priority = 0, int max_time = 0, int deadline = 0, int period = 0) {
             this->process_ID = process_ID;
             this->burst_time = burst_time;
             this->priority = priority;
-            this->remaining_time = burst_time;
+            
             this->max_time = max_time;
+            this->deadline = deadline;
+            this->period = period;
+
+            this->remaining_time = ((burst_time != 0) ? burst_time : max_time);
+            this->remaining_deadline = deadline;
         }
 
     public:     
@@ -25,6 +36,10 @@ class Process {
 
         static Process withMaxTime(int process_ID, int max_time) {
             return Process(process_ID, 0, 0, max_time);
+        }
+
+        static Process withMaxTime_Deadline_Period(int process_ID, int max_time, int deadline, int period) {
+            return Process(process_ID, 0, 0, max_time, deadline, period);
         }
 
         // Getters
@@ -48,6 +63,18 @@ class Process {
             return max_time;
         }
 
+        int getDeadline() const {
+            return deadline;
+        }
+
+        int getPeriod() const {
+            return period;
+        }
+
+        int getRemainingDeadline() const {
+            return remaining_deadline;
+        }
+
         // Setters
         void setProcessID(int id) {
             process_ID = id;
@@ -68,5 +95,17 @@ class Process {
 
         void setMaxTime(int time) {
             max_time = time;
+        }
+
+        void setDeadline(int time) {
+            deadline = time;
+        }
+
+        void setPeriod(int time) {
+            period = time;
+        }
+
+        void setRemainingDeadline(int time) {
+            remaining_deadline = time;
         }
 };

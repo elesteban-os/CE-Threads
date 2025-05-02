@@ -42,6 +42,9 @@ class Scheduler {
                     algorithm = new RR();
                     this->quantum = quantum; // Asignar quantum en RR
                     break;
+                case(ScheduleType::REALTIME):
+                    algorithm = new RealTime;
+                    break;
 
                 // Asignar quantum en RR
                 default:
@@ -63,15 +66,16 @@ class Scheduler {
 // Probar el calendarizador
 int main() {
     // Crear un scheduler
-    Scheduler scheduler(ScheduleType::RR, 50, 3);
+    Scheduler scheduler(ScheduleType::REALTIME, 200, 3);
     
     // Crear algunos procesos
     std::vector<Process> processes;
-    processes.push_back(Process::withBurstTime(1, 18));
-    processes.push_back(Process::withBurstTime(2, 13));
-    processes.push_back(Process::withBurstTime(3, 24));
-    processes.push_back(Process::withBurstTime(4, 9));
-    processes.push_back(Process::withBurstTime(5, 53));
+    processes.push_back(Process::withMaxTime_Deadline_Period(1, 20, 1, 4));
+    processes.push_back(Process::withMaxTime_Deadline_Period(2, 20, 2, 8));
+    processes.push_back(Process::withMaxTime_Deadline_Period(3, 20, 4, 16));
+    //processes.push_back(Process::withMaxTime_Deadline_Period(4, 20, 6, 24));
+    //processes.push_back(Process::withMaxTime_Deadline_Period(4, 9));
+    //processes.push_back(Process::withMaxTime_Deadline_Period(5, 53));
     
     // Calendarizar los procesos
     std::queue<Process> scheduled_processes = scheduler.schedule(processes);
@@ -80,7 +84,8 @@ int main() {
     while (!scheduled_processes.empty()) {
         Process p = scheduled_processes.front();
         scheduled_processes.pop();
-        std::cout << "Process ID: " << p.getProcessID() << ", Remaining time:" << p.getRemainingTime() << std::endl;
+        std::cout << "Process ID: " << p.getProcessID() << ", Remaining time: " << p.getRemainingTime() << ", Deadline: " << p.getRemainingDeadline() << std::endl;
+        //std::cout << p.getProcessID() << ", "  ;
     }
     
     return 0;
