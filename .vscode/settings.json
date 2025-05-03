@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "cemutex.h": "c",
+        "futex.h": "c"
+    }
+}
