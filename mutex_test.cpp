@@ -2,10 +2,10 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <iostream>
-#include "CE_mutex.hpp"  
+#include "CE_threads.h"  
 
 #define NUM_THREADS 5
-#define NUM_INCREMENTS 100000
+#define NUM_INCREMENTS 100
 
 using namespace std;
 
@@ -30,28 +30,29 @@ void* thread_function(void* arg) {
  * Se han realizado modificaciones para integrar la implementacion propia del mutex.
  */
 int main() {
-    pthread_t threads[NUM_THREADS];
+    CEthread_t threads[NUM_THREADS];
+    int thread_args[NUM_THREADS];  // Arreglo para almacenar los argumentos de cada hilo
 
-    
     // Inicializamos el mutex con CEmutex_init
     if (CEmutex_init(&lock) != 0) {
         perror("CEmutex_init");
         return 1;
     }
 
-    for (long i = 0; i < NUM_THREADS; i++) {
-        int result = pthread_create(&threads[i], NULL, thread_function, NULL);
+    for (int i = 0; i < NUM_THREADS; i++) {
+        thread_args[i] = i;  // Asignar un valor único para cada hilo
+        int result = CEthread_create(&threads[i], thread_function, &thread_args[i]);
         if (result != 0) {
             perror("pthread_create");
             return 1;
         }
     }
 
-    for (long i = 0; i < NUM_THREADS; i++) {
-        pthread_join(threads[i], NULL);
+    for (int i = 0; i < NUM_THREADS; i++) {
+        CEthread_join(threads[i]);
     }
 
-    // Destruirmos el mutex usando CEmutex_destroy
+    // Destruimos el mutex usando CEmutex_destroy
     CEmutex_destroy(&lock);
 
     // Imprimir el valor final de la variable compartida
