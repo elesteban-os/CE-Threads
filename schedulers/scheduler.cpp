@@ -66,7 +66,7 @@ class Scheduler {
 // Probar el calendarizador
 int main() {
     // Crear un scheduler
-    Scheduler scheduler(ScheduleType::RR, 25, 3);
+    Scheduler scheduler(ScheduleType::REALTIME, 10, 3);
     
     // Crear algunos procesos
     std::vector<Process> processes;
@@ -98,7 +98,7 @@ int main() {
     //processes.push_back(Process::withMaxTime_Deadline_Period(5, 53));
 
 
-    //while (!processes.empty()) {
+    while (!processes.empty()) {
         // Calendarizar los procesos
         std::cout << "Schedule Iteration" << std::endl;
         std::queue<Process> scheduled_processes = scheduler.schedule(&processes);
@@ -108,7 +108,7 @@ int main() {
             std::cout << "Process ID: " << p.getProcessID() << ", Remaining time: " << p.getRemainingTime() << ", Deadline: " << p.getRemainingDeadline() << ", Period: " << p.getPeriod() <<std::endl;
             //std::cout << p.getProcessID() << ", "  ;
         }
-    //}
+    }
     
     
 }

@@ -121,17 +121,17 @@ class RR : public ScheduleAlgorithm {
 class RealTime : public ScheduleAlgorithm {
     std::queue<Process> schedule(std::vector<Process> *dataProcess, int queue_length, int quantum = 0) override {
         std::queue<Process> q;
-        std::vector<Process> dataProcessTmp = *dataProcess;
+        //std::vector<Process> dataProcessTmp = *dataProcess;
         std::vector<Process*> tmp;
 
         // Ordenar los procesos por periodos (prioridad)
-        std::sort(dataProcessTmp.begin(), dataProcessTmp.end(), [](const Process& a, const Process& b) {
+        std::sort(dataProcess->begin(), dataProcess->end(), [](const Process& a, const Process& b) {
             return a.getPeriod() < b.getPeriod(); 
         });
 
         int time = 0;
         while (q.size() != queue_length) {
-            for (Process& p : dataProcessTmp) {
+            for (Process& p : *dataProcess) {
                 // Comprobar si entro un nuevo proceso en el ciclo
                 if (time % p.getPeriod() == 0 && p.getRemainingTime() != 0) {
                     tmp.push_back(&p);
@@ -160,9 +160,9 @@ class RealTime : public ScheduleAlgorithm {
                 // Comprobar si el proceso actual termino
                 if (remaining_time == 0) {
                     // Eliminarlo de la lista de procesos temporal
-                    for (auto it = dataProcessTmp.begin(); it != dataProcessTmp.end(); ++it) {
+                    for (auto it = dataProcess->begin(); it != dataProcess->end(); ++it) {
                         if (it->getRemainingTime() == 0) {
-                            dataProcessTmp.erase(it);
+                            dataProcess->erase(it);
                             break; 
                         }
                     }
