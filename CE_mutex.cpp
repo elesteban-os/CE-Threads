@@ -1,4 +1,4 @@
-#include "CE_mutex.h"
+#include "CE_mutex.hpp"
 
 /*
  * Wrapper para la llamada al sistema futex.
