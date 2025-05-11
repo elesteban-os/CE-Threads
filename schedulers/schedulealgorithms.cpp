@@ -3,90 +3,111 @@
 #include <vector>
 #include <algorithm>
 #include <stack>
+#include <iostream>
 
 // Clase abstracta para los algoritmos
 class ScheduleAlgorithm {
     public:
-        virtual std::queue<Process> schedule(std::vector<Process> dataProcess, int queue_length, int quantum = 0) = 0;
+        virtual std::queue<Process> schedule(std::vector<Process>* dataProcess, int queue_length, int quantum = 0) = 0;
         virtual ~ScheduleAlgorithm() {};
 };
 
 
 // Algoritmo FCFS
 class FCFS : public ScheduleAlgorithm {
-    std::queue<Process> schedule(std::vector<Process> dataProcess, int queue_length, int quantum = 0) override {
+    std::queue<Process> schedule(std::vector<Process>* dataProcess, int queue_length, int quantum = 0) override {
         std::queue<Process> q;
-        for (Process p : dataProcess) {
-            if (q.size() == queue_length) {
-                return q;
-            }
-            q.push(p);
+
+        while (q.size() != queue_length && !dataProcess->empty()) {
+            q.push(dataProcess->front());
+            dataProcess->erase(dataProcess->begin());
         }
+
         return q;
     }
 
 };
+
+
 
 // Algoritmo SJF
 class SJF : public ScheduleAlgorithm {
-    std::queue<Process> schedule(std::vector<Process> dataProcess, int queue_length, int quantum = 0) override {
+    std::queue<Process> schedule(std::vector<Process>* dataProcess, int queue_length, int quantum = 0) override {
         std::queue<Process> q;
-        std::sort(dataProcess.begin(), dataProcess.end(), [](const Process& a, const Process& b) {
+        std::sort(dataProcess->begin(), dataProcess->end(), [](const Process& a, const Process& b) {
             return a.getBurstTime() < b.getBurstTime();
         });
-        for (Process p : dataProcess) {
-            if (q.size() == queue_length) {
-                return q;
-            }
-            q.push(p);
+        while (q.size() != queue_length && !dataProcess->empty()) {
+            q.push(dataProcess->front());
+            dataProcess->erase(dataProcess->begin());
         }
         return q;
     }
 };
+
+
 
 // Algoritmo Priority
 class Priority : public ScheduleAlgorithm {
-    std::queue<Process> schedule(std::vector<Process> dataProcess, int queue_length, int quantum = 0) override {
+    std::queue<Process> schedule(std::vector<Process>* dataProcess, int queue_length, int quantum = 0) override {
         std::queue<Process> q;
-        std::sort(dataProcess.begin(), dataProcess.end(), [](const Process& a, const Process& b) {
+        std::sort(dataProcess->begin(), dataProcess->end(), [](const Process& a, const Process& b) {
             return a.getPriority() < b.getPriority();
         });
-        for (Process p : dataProcess) {
-            if (q.size() == queue_length) {
-                return q;
-            }
-            q.push(p);
+
+        while (q.size() != queue_length && !dataProcess->empty()) {
+            q.push(dataProcess->front());
+            dataProcess->erase(dataProcess->begin());
         }
         return q;
     }
 };
 
+
+
 // Algoritmo Round-Robin
 class RR : public ScheduleAlgorithm {
-    std::queue<Process> schedule(std::vector<Process> dataProcess, int queue_length, int quantum = 0) override {
+    std::queue<Process> schedule(std::vector<Process>* dataProcess, int queue_length, int quantum = 0) override {
         std::queue<Process> q;
-        std::queue<Process> tmp;
-        
+        std::queue<Process*> tmp;
+        std::queue<Process*> finished_processes;
 
-        for (Process& p : dataProcess) {
-            tmp.push(p);
+        for (Process& p : *dataProcess) {
+            tmp.push(&p);
         }
 
         while (!tmp.empty()) {
             if (q.size() == queue_length) {
-                return q;
+                break;
             }
             
-            Process current = tmp.front();
+            Process *current = tmp.front(); 
             tmp.pop();
 
-            int remaining_time = std::max(0, current.getRemainingTime() - quantum);
-            current.setRemainingTime(remaining_time);
+            int remaining_time = std::max(0, current->getRemainingTime() - quantum);
+            current->setRemainingTime(remaining_time);
 
-            q.push(current);
+            q.push(*current);
 
             if (remaining_time > 0) {
                 tmp.push(current);
+            } else {
+                // Agregar el proceso a los que han terminado
+                finished_processes.push(current);
+            }
+        }
+
+        // Eliminar los procesos terminados de dataProcess
+        while (!finished_processes.empty()) {
+            Process* finished = finished_processes.front();
+            finished_processes.pop();
+
+            auto it = std::find_if(dataProcess->begin(), dataProcess->end(), [&](const Process& p) {
+                return p.getProcessID() == finished->getProcessID();
+            });
+
+            if (it != dataProcess->end()) {
+                dataProcess->erase(it);
             }
         }
 
@@ -94,11 +115,13 @@ class RR : public ScheduleAlgorithm {
     }
 };
 
+
+
 // Algoritmo Real-Time
 class RealTime : public ScheduleAlgorithm {
-    std::queue<Process> schedule(std::vector<Process> dataProcess, int queue_length, int quantum = 0) override {
+    std::queue<Process> schedule(std::vector<Process> *dataProcess, int queue_length, int quantum = 0) override {
         std::queue<Process> q;
-        std::vector<Process> dataProcessTmp = dataProcess;
+        std::vector<Process> dataProcessTmp = *dataProcess;
         std::vector<Process*> tmp;
 
         // Ordenar los procesos por periodos (prioridad)
@@ -164,3 +187,4 @@ class RealTime : public ScheduleAlgorithm {
 
     }
 };
+

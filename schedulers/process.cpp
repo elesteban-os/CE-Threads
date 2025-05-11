@@ -108,4 +108,9 @@ class Process {
         void setRemainingDeadline(int time) {
             remaining_deadline = time;
         }
+
+        // Operator==
+        bool operator==(const Process& other) const {
+            return this->process_ID == other.process_ID;
+        }
 };

@@ -55,8 +55,8 @@ class Scheduler {
 
 
         // Calendarizar con los procesos
-        std::queue<Process> schedule(std::vector<Process> dataProcess) {
-            this->schedule_queue = this->algorithm->schedule(dataProcess, queue_max_length, this->quantum);
+        std::queue<Process> schedule(std::vector<Process> *dataProcess) {
+            this->schedule_queue = this->algorithm->schedule(dataProcess, this->queue_max_length, this->quantum);
             return this->schedule_queue;
         }
 
@@ -66,28 +66,50 @@ class Scheduler {
 // Probar el calendarizador
 int main() {
     // Crear un scheduler
-    Scheduler scheduler(ScheduleType::REALTIME, 200, 3);
+    Scheduler scheduler(ScheduleType::RR, 25, 3);
     
     // Crear algunos procesos
     std::vector<Process> processes;
-    processes.push_back(Process::withMaxTime_Deadline_Period(1, 20, 1, 4));
-    processes.push_back(Process::withMaxTime_Deadline_Period(2, 20, 2, 8));
-    processes.push_back(Process::withMaxTime_Deadline_Period(3, 20, 4, 16));
+
+    // Prueba RR
+    // processes.push_back(Process::withBurstTime(1, 4));
+    // processes.push_back(Process::withBurstTime(2, 2));
+    // processes.push_back(Process::withBurstTime(3, 12));
+    // processes.push_back(Process::withBurstTime(4, 15));
+
+    // Prueba Priority
+    // processes.push_back(Process::withPriority(1, 4));
+    // processes.push_back(Process::withPriority(2, 2));
+    // processes.push_back(Process::withPriority(3, 20));
+    // processes.push_back(Process::withPriority(4, 15));
+
+    // Prueba SJF
+    //processes.push_back(Process::withBurstTime(1, 4));
+    //processes.push_back(Process::withBurstTime(2, 2));
+    //processes.push_back(Process::withBurstTime(3, 20));
+    //processes.push_back(Process::withBurstTime(4, 15));
+
+    // Prueba RealTime
+    processes.push_back(Process::withMaxTime_Deadline_Period(1, 20, 1, 6));
+    processes.push_back(Process::withMaxTime_Deadline_Period(2, 20, 2, 9));
+    processes.push_back(Process::withMaxTime_Deadline_Period(3, 20, 6, 18));
     //processes.push_back(Process::withMaxTime_Deadline_Period(4, 20, 6, 24));
     //processes.push_back(Process::withMaxTime_Deadline_Period(4, 9));
     //processes.push_back(Process::withMaxTime_Deadline_Period(5, 53));
+
+
+    //while (!processes.empty()) {
+        // Calendarizar los procesos
+        std::cout << "Schedule Iteration" << std::endl;
+        std::queue<Process> scheduled_processes = scheduler.schedule(&processes);
+        while (!scheduled_processes.empty()) {
+            Process p = scheduled_processes.front();
+            scheduled_processes.pop();
+            std::cout << "Process ID: " << p.getProcessID() << ", Remaining time: " << p.getRemainingTime() << ", Deadline: " << p.getRemainingDeadline() << ", Period: " << p.getPeriod() <<std::endl;
+            //std::cout << p.getProcessID() << ", "  ;
+        }
+    //}
     
-    // Calendarizar los procesos
-    std::queue<Process> scheduled_processes = scheduler.schedule(processes);
     
-    // Imprimir los procesos programados
-    while (!scheduled_processes.empty()) {
-        Process p = scheduled_processes.front();
-        scheduled_processes.pop();
-        std::cout << "Process ID: " << p.getProcessID() << ", Remaining time: " << p.getRemainingTime() << ", Deadline: " << p.getRemainingDeadline() << std::endl;
-        //std::cout << p.getProcessID() << ", "  ;
-    }
-    
-    return 0;
 }
 

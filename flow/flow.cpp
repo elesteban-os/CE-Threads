@@ -9,20 +9,20 @@ enum class SignDirection { LEFT, RIGHT };
 struct EquityData {
     int W;
     int processes_executed = 0;
-    SignDirection signDirection = SignDirection::RIGHT;
+    
 };
 
 struct SignData {
     int time;       // Tiempo que debe pasar para cambiar el letrero
     long long elapsed; 
     std::chrono::steady_clock::time_point last_execution;
-    SignDirection signDirection = SignDirection::RIGHT;
 };
 
 
 class Flow {
     protected:
         FlowAlgorithm flowAlgorithm;
+        SignDirection signDirection = SignDirection::RIGHT;
 
     public:
         Flow(FlowAlgorithm algorithm) : flowAlgorithm(algorithm) {}
@@ -35,6 +35,10 @@ class Flow {
         FlowAlgorithm getAlgorithm() const {
             return flowAlgorithm;
         }
+
+        SignDirection getSignDirection() {
+            return signDirection;
+        }
 };
 
 class Equity : public Flow {
@@ -46,20 +50,21 @@ class Equity : public Flow {
 
         // Llamar unicamente cuando termino un proceso
         int update() override { 
-            
-            if (data.processes_executed++ == data.W) {
+            //data.processes_executed++;
+            if (data.processes_executed == data.W) {
                 // Terminaron los procesos de este lado
                 data.processes_executed = 0;
-                if (data.signDirection == SignDirection::RIGHT) {
+                if (signDirection == SignDirection::RIGHT) {
                     // Cambiar la direccion del letrero
-                    data.signDirection = SignDirection::LEFT;
+                    signDirection = SignDirection::LEFT;
                 } else { 
-                    data.signDirection = SignDirection::RIGHT;
+                    signDirection = SignDirection::RIGHT;
                 }
             }
+            data.processes_executed++;
             std::cout << "Procesos ejecutados: " << data.processes_executed << std::endl;
             // Retorna 1 si hubo un cambio en la direccion de la senal
-            return data.processes_executed == 0;
+            return data.processes_executed == 1;
         }
 
         // Getter para los datos de Equity
@@ -85,10 +90,10 @@ class Sign : public Flow {
             if (data.elapsed >= data.time) {
                 data.last_execution = now; 
                 // Cambiar la direccion del letrero
-                if (data.signDirection == SignDirection::RIGHT) {
-                    data.signDirection = SignDirection::LEFT;
+                if (signDirection == SignDirection::RIGHT) {
+                    signDirection = SignDirection::LEFT;
                 } else { 
-                    data.signDirection = SignDirection::RIGHT;
+                    signDirection = SignDirection::RIGHT;
                 }
                 return 1; 
             }
@@ -99,6 +104,8 @@ class Sign : public Flow {
         SignData getData() const {
             return data;
         }
+
+        
 };
 
 class FIFO : public Flow {
@@ -107,14 +114,10 @@ class FIFO : public Flow {
 
         // No hacer nada
         int update() override {
-            return 0; // Por ahora
+            return 1; // Por ahora
         }
 };
 
-
-void performAction() {
-    std::cout << "Acción ejecutada" << std::endl;
-}
 
 int main() {
 
@@ -126,7 +129,16 @@ int main() {
         
         if (flow->update()) {
             std::cout << "Senal cambiada" << std::endl;
-        }  
+        } 
+        
+        if (flow->getSignDirection() == SignDirection::LEFT) {
+            // Calendarizar vector derecho y ejecutar
+            std::cout << "vector derecho" << std::endl;
+        } else {
+            // Calendarizar vector izquierdo y ejecutar
+            std::cout << "vector izquierdo" << std::endl;
+        }
+
         // Pausar la ejecución durante 1000 milisegundos
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));      
     }
