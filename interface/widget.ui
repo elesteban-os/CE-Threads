@@ -497,6 +497,25 @@ background-color: rgb(255, 255, 255);</string>
     <string notr="true">background-color:  #1C223A;  border-radius: 5px; </string>
    </property>
   </widget>
+  <widget class="QLabel" name="imagenDeportivo">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>310</y>
+     <width>141</width>
+     <height>101</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="pixmap">
+    <pixmap resource="resources.qrc">:/assets/deportivo.png</pixmap>
+   </property>
+   <property name="scaledContents">
+    <bool>true</bool>
+   </property>
+  </widget>
   <zorder>graphicsView</zorder>
   <zorder>graphicsView_4</zorder>
   <zorder>graphicsView_5</zorder>
@@ -526,7 +545,10 @@ background-color: rgb(255, 255, 255);</string>
   <zorder>verticalLayoutWidget_5</zorder>
   <zorder>graphicsView_7</zorder>
   <zorder>pushButton</zorder>
+  <zorder>imagenDeportivo</zorder>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections/>
 </ui>
