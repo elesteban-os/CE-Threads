@@ -1,10 +1,12 @@
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 #include "CE_threads.h"
 #include <sched.h>
-#include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
 
 /*
  * struct for the thread arguments 
@@ -20,7 +22,7 @@ typedef struct {
 static int thread_func(void *arg) {
     thread_args_t *args = (thread_args_t *)arg; // cast the arguments recievied to type thread_args_t
     args->func(args->arg); // execute the function referenced by the pointer recieved with the arguments
-    free(args); // frees the dinamic memory used to create the thread_args_t
+    delete args; // frees the dinamic memory used to create the thread_args_t
     return 0;
 }
 
@@ -31,13 +33,13 @@ int CEthread_create(CEthread_t *thread, void *(*start_routine)(void *), void *ar
     thread->stack = malloc(STACK_SIZE); // reserve dynamically memory for the stack of the thread
     if (!thread->stack) return -1; // verify if stack was reserved correctly
 
-    thread_args_t *args = malloc(sizeof(thread_args_t)); // reserve memory for the thread_args_t struct
+    thread_args_t *args = new thread_args_t; // reserve memory for the thread_args_t struct
     args->func = start_routine; // assign start_routine (the function to be executed) in the pointer func
     args->arg = arg; // assign the arguments recieved to the pointer args (this args will be passed to the function that will be executed)
     
     // invoke the system call "clone"
     thread->tid = clone(thread_func, // function to be executed
-                        (char *)thread->stack + STACK_SIZE, // pointer to the end of the stack
+                        static_cast<char *>(thread->stack) + STACK_SIZE, // pointer to the end of the stack
                         SIGCHLD,  // flag to indicate the system that needs to send a sigal when the thread finish
                         args); // arguments
                         // if the thread had success returns the thread ID, if not, returns -1
@@ -51,6 +53,6 @@ int CEthread_create(CEthread_t *thread, void *(*start_routine)(void *), void *ar
 int CEthread_join(CEthread_t thread) {
     int status; // contains the exit status of the thread
     pid_t r = waitpid(thread.tid, &status, 0); // calls waitpid to wait until the thread ends (equivalent to fork())
-    free(thread.stack); // frees the stack
+    std::free(thread.stack); // frees the stack
     return (r == -1) ? -1 : 0;
 }

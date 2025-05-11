@@ -1,4 +1,4 @@
-// gcc main.c CE_threads.c -o programa -Wall
+// g++ main.cpp CE_threads.cpp -o programa -Wall
 
 #include <stdio.h>
 #include <unistd.h>
