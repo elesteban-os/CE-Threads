@@ -21,12 +21,17 @@ void validate_configuration(const Configuration &config) {
     
     // Validacion de los parametro w_param
     if (config.parameters.w_param < 0) {
-        throw runtime_error("W param must be greater than 0");
+        cout << "Warning: W param must be greater than 0" << endl;
     }
 
     // Validacion de los parametro sign_time
     if (config.parameters.sign_time < 0) {
-        throw runtime_error("Sign time must be greater than 0");
+        cout << "Warning: Sign time must be greater than 0" << endl; 
+    }
+
+    // Validacion de los parametro quantum
+    if (config.parameters.quantum <= 0) {
+        cout << "Warning: Quantum must be greater than 0" << endl;
     }
 
     // Validacion de los parametros de la calle
@@ -34,19 +39,6 @@ void validate_configuration(const Configuration &config) {
         throw runtime_error("Street parameters must be greater than 0");
     }
   
-    int total_left = config.left.normal + config.left.deportive + config.left.emergency;
-    int total_right = config.right.normal + config.right.deportive + config.right.emergency;
-
-    // Validacion de cantidad de carros
-    if (total_left + total_right > config.parameters.queue_size) {
-        throw runtime_error("Total cars exceed queue size");
-    }
-    if (total_left > config.parameters.queue_size) {
-        throw runtime_error("Left extreme has more cars than queue size");
-    } 
-    if (total_right > config.parameters.queue_size) {
-        throw runtime_error("Right extreme has more cars than queue size");
-    }
 }
 
 /*
@@ -84,6 +76,7 @@ Configuration read_configuration(const string& filename) {
         config.parameters.queue_size = data.at("parametros").at("largo_cola").get<int>();
         config.parameters.w_param = data.at("parametros").at("W").get<int>();
         config.parameters.sign_time = data.at("parametros").at("tiempo_letreto").get<int>();
+        config.parameters.quantum = data.at("parametros").at("quantum").get<int>();
 
         // Parsea los parametros de la calle
         config.street.size = data.at("calle").at("largo").get<int>();

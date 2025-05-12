@@ -1,12 +1,13 @@
 {
     "metodo_control": "FIFO",             
     
-    "calendarizador": "FCFS",
+    "calendarizador": "RR",
     
     "parametros": {
-        "largo_cola": 10,
-        "W": 0, 
-        "tiempo_letreto": 0             
+        "largo_cola": 3,
+        "W": 2, 
+        "tiempo_letreto": 1,
+        "quantum": 2          
     },
 
     "calle": {                              
@@ -15,7 +16,6 @@
     },
 
     "carros": {                          
-        
         "izquierda": {                     
             "normal": 3,                     
             "deportivo": 2,                   
@@ -24,7 +24,7 @@
 
         "derecha": {                        
             "normal": 4,           
-            "deportivo": 0,
+            "deportivo": 8,
             "emergencia": 1      
         }
     }

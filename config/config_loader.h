@@ -11,6 +11,7 @@ struct Parameters {
     int queue_size;
     int w_param;
     int sign_time;
+    int quantum;
 };
 
 struct Street {

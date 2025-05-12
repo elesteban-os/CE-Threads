@@ -21,9 +21,10 @@ class Scheduler {
         ScheduleAlgorithm* algorithm = nullptr; // Puntero al algoritmo de planificación
         std::queue<Process> schedule_queue;     // Cola de procesos planificados
         int queue_max_length = 0;               // Longitud máxima de la cola
-        int quantum = 0;                        // Quantum para RR
+        
 
     public:
+        int quantum = 0;                        // Quantum para RR
         // Constructores
         Scheduler();
         Scheduler(ScheduleType type, int q_length, int quantum = 3);
@@ -33,6 +34,7 @@ class Scheduler {
 
         // Destructor
         ~Scheduler();
+        
 };
 
 #endif // SCHEDULER_H

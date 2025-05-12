@@ -4,7 +4,8 @@
 Process::Process(int process_ID, int burst_time, int priority, int max_time, int deadline, int period)
     : process_ID(process_ID),
       burst_time(burst_time),
-      remaining_time((burst_time != 0) ? burst_time : max_time),
+      remaining_time_RR(burst_time),
+      remaining_time(max_time),
       priority(priority),
       max_time(max_time),
       deadline(deadline),
@@ -61,6 +62,10 @@ int Process::getRemainingDeadline() const {
     return remaining_deadline;
 }
 
+int Process::getRemainingTime_RR() const {
+    return remaining_time_RR;
+}
+
 // Setters
 void Process::setProcessID(int id) {
     process_ID = id;
@@ -93,6 +98,11 @@ void Process::setPeriod(int time) {
 
 void Process::setRemainingDeadline(int time) {
     remaining_deadline = time;
+}
+
+
+void Process::setRemainingTime_RR(int time) {
+    remaining_time_RR = time;
 }
 
 // Operador ==

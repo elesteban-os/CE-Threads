@@ -39,7 +39,7 @@ void imprimirConfiguracion(const Configuration& config) {
 int main() {
     try
     {
-        Configuration config = read_configuration("config.json");
+        Configuration config = read_configuration("config/config.json");
         imprimirConfiguracion(config);
     }
     catch(const exception& e)
