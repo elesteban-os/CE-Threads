@@ -99,7 +99,7 @@ void Widget::setScheduleTypeLabel(ScheduleType scheduler){
         case ScheduleType::FCFS: scheduleStr = "FCFS"; break;
         case ScheduleType::SJF: scheduleStr = "SJF"; break;
         case ScheduleType::RR: scheduleStr = "RR"; break;
-        case ScheduleType::PRIORITY: scheduleStr = "PRIORITY"; break;
+        case ScheduleType::PRIORITY: scheduleStr = "PRIORIDAD"; break;
         case ScheduleType::REALTIME: scheduleStr = "REALTIME"; break;
     }
 
@@ -118,7 +118,9 @@ void Widget::setFlowLabel(FlowAlgorithm flowAlgorithm){
 
     QString flowStr;
     switch (flowAlgorithm) {
-        case FlowAlgorithm::EQUITY: flowStr = "EQUITY"; break;
+        case FlowAlgorithm::EQUITY: flowStr = "EQUIDAD"; break;
+        case FlowAlgorithm::SIGN: flowStr = "LETRERO"; break;
+        case FlowAlgorithm::FIFO: flowStr = "FIFO"; break;
     }
 
     // Crear nuevas etiquetas
@@ -133,7 +135,7 @@ void Widget::setFlowLabel(FlowAlgorithm flowAlgorithm){
 
 void Widget::on_pushButton_clicked()
 {
-    ProcessManagement pm(ScheduleType::FCFS, 3, FlowAlgorithm::EQUITY, 3);
+    ProcessManagement pm(ScheduleType::FCFS, 3, FlowAlgorithm::SIGN, 3);
 
     // // Agregar procesos al lado izquierdo
     pm.newLeftProcess(Process::withBurstTime(1, 10));
