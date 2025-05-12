@@ -10,6 +10,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <semaphore.h>
+#include <iostream>
 
 
 #define STACK_SIZE 1024 * 1024  // 1 MB per thread
@@ -17,7 +18,7 @@
 typedef struct {
     void *stack;
     pid_t tid;
-    sem_t finished;  // nuevo: semáforo para sincronización
+    sem_t finished;  // semaphore to synchronize
 } CEthread_t;
 
 typedef struct {
@@ -25,7 +26,7 @@ typedef struct {
 } CEmutex;
 
 int CEthread_create(CEthread_t *thread, void *(*start_routine)(void *), void *arg);
-int CEthread_join(CEthread_t thread);
+int CEthread_join(CEthread_t *thread);
 
 int CEmutex_init(CEmutex *mutex);       // Inicializa el mutex en un estado desbloqueado.
 int CEmutex_lock(CEmutex *mutex);       // Bloquea el mutex, esperando si ya está bloqueado.

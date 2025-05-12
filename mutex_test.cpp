@@ -5,7 +5,7 @@
 #include "CE_threads.h"  
 
 #define NUM_THREADS 5
-#define NUM_INCREMENTS 100
+#define NUM_INCREMENTS 20
 
 using namespace std;
 
@@ -13,11 +13,13 @@ int shared_variable = 0;
 CEmutex lock;  // Usamos CEmutex en lugar de pthread_mutex_t
 
 void* thread_function(void* arg) {
+    
     for (int i = 0; i < NUM_INCREMENTS; i++) {
         CEmutex_lock(&lock);     // Usar tu función lock
         shared_variable++;       // Incrementar la variable compartida
         CEmutex_unlock(&lock);   // Usar tu función unlock
     }
+    std::cout << "Hilo " << *(int*)arg << " ejecutando..." << std::endl;
     return nullptr;
 }
 
@@ -30,6 +32,9 @@ void* thread_function(void* arg) {
  * Se han realizado modificaciones para integrar la implementacion propia del mutex.
  */
 int main() {
+
+    // Inicializar el mutex
+    
     CEthread_t threads[NUM_THREADS];
     int thread_args[NUM_THREADS];  // Arreglo para almacenar los argumentos de cada hilo
 
@@ -49,7 +54,7 @@ int main() {
     }
 
     for (int i = 0; i < NUM_THREADS; i++) {
-        CEthread_join(threads[i]);
+        CEthread_join(&threads[i]);
     }
 
     // Destruimos el mutex usando CEmutex_destroy
@@ -57,8 +62,9 @@ int main() {
 
     // Imprimir el valor final de la variable compartida
     cout << "Valor final de la variable compartida: " << shared_variable << endl;
-
+    
     return 0;
 }
 
-// Compilar con: g++ -o mutex_test mutex_test.cpp CE_mutex.cpp -lpthread
+// Compilar con: g++ -o mutex_test mutex_test.cpp CE_threads.cpp -lpthread
+// Ejecutar con: ./mutex_test

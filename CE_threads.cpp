@@ -9,6 +9,7 @@
 typedef struct {
     void *(*func)(void *);  // pointer to the function to be executed
     void *arg; // generic pointer (required by "clone")
+    CEthread_t *thread;  // a pointer to the thread struct
 } thread_args_t;
 
 /*
@@ -16,7 +17,8 @@ typedef struct {
  */
 static int thread_func(void *arg) {
     thread_args_t *args = (thread_args_t *)arg; // cast the arguments recievied to type thread_args_t
-    args->func(args->arg); // execute the function referenced by the pointer recieved with the arguments
+    args->func(args->arg);
+    sem_post(&args->thread->finished);  // notifica que terminó
     delete args; // frees the dinamic memory used to create the thread_args_t
     return 0;
 }
@@ -25,12 +27,14 @@ static int thread_func(void *arg) {
  * CE_thread function to create threads
  */
 int CEthread_create(CEthread_t *thread, void *(*start_routine)(void *), void *arg) {
+    sem_init(&thread->finished, 0, 0);  // 0 indicates shared only between threads
     thread->stack = malloc(STACK_SIZE); // reserve dynamically memory for the stack of the thread
     if (!thread->stack) return -1; // verify if stack was reserved correctly
 
     thread_args_t *args = new thread_args_t; // reserve memory for the thread_args_t struct
     args->func = start_routine; // assign start_routine (the function to be executed) in the pointer func
     args->arg = arg; // assign the arguments recieved to the pointer args (this args will be passed to the function that will be executed)
+    args->thread = thread; // assign the thread to the struct
     
     // invoke the system call "clone"
     int flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD;
@@ -39,6 +43,8 @@ int CEthread_create(CEthread_t *thread, void *(*start_routine)(void *), void *ar
                         flags,  // flag to indicate the system that needs to send a sigal when the thread finish
                         args); // arguments
                         // if the thread had success returns the thread ID, if not, returns -1
+    
+    sleep(0.1);  // Esperar un segundo para que los hilos terminen de crearse
 
     return (thread->tid == -1) ? -1 : 0; // compare if the execution returns -1, then returns -1, if not, return 0 (success)
 }
@@ -46,11 +52,11 @@ int CEthread_create(CEthread_t *thread, void *(*start_routine)(void *), void *ar
 /*
  * CE_thread function to wait the end of a thread execution and then clean resources
  */
-int CEthread_join(CEthread_t thread) {
-    int status; // contains the exit status of the thread
-    pid_t r = waitpid(thread.tid, &status, 0); // calls waitpid to wait until the thread ends (equivalent to fork())
-    std::free(thread.stack); // frees the stack
-    return (r == -1) ? -1 : 0;
+int CEthread_join(CEthread_t *thread) {
+    sem_wait(&thread->finished);  // wait until the thread finish
+    sem_destroy(&thread->finished);  // lclean the semaphore
+    std::free(thread->stack); // frees the stack
+    return 0;
 }
 
 /*
