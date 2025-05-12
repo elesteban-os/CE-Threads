@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "cemutex.h": "c",
+        "futex.h": "c",
+        "iostream": "cpp"
+        "unistd.h": "c"
+    }
+}
