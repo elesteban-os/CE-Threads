@@ -14,11 +14,14 @@ struct ThreadArgs {
     SignDirection direction;
 };
 
+Q_DECLARE_METATYPE(SignDirection)
+
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::Widget)
 {
     ui->setupUi(this);
+    qRegisterMetaType<SignDirection>("SignDirection");
 }
 
 Widget::~Widget()
@@ -64,31 +67,73 @@ void Widget::animateAndWait(SignDirection direction) {
 }
 
 
-
-
 void* thread_task(void* arg) {
     ThreadArgs* args = static_cast<ThreadArgs*>(arg);
     Widget* widget = args->widget;
     SignDirection direction = args->direction;
-    delete args;  // liberar memoria después de usar
 
     std::cout << "ejecutando hilo" << std::endl;
 
     if (QThread::currentThread() == widget->thread()) {
         widget->animateAndWait(direction);
     } else {
-        QMetaObject::invokeMethod(widget, "animateAndWait", Qt::BlockingQueuedConnection,
-                                  Q_ARG(SignDirection, direction));
+        bool success = QMetaObject::invokeMethod(widget, "animateAndWait", Qt::BlockingQueuedConnection,
+                                                 Q_ARG(SignDirection, direction));
+        if (!success) {
+            std::cerr << "Error: invokeMethod falló." << std::endl;
+        }
     }
+    delete args;  // liberar memoria después de usar
 
     return nullptr;
+}
+
+void Widget::setScheduleTypeLabel(ScheduleType scheduler){
+    if (scheduleLabel) {
+        scheduleLabel->deleteLater();
+        scheduleLabel = nullptr;
+    }
+
+    QString scheduleStr;
+    switch (scheduler) {
+        case ScheduleType::FCFS: scheduleStr = "FCFS"; break;
+        case ScheduleType::SJF: scheduleStr = "SJF"; break;
+        case ScheduleType::RR: scheduleStr = "RR"; break;
+        case ScheduleType::PRIORITY: scheduleStr = "PRIORITY"; break;
+        case ScheduleType::REALTIME: scheduleStr = "REALTIME"; break;
+    }
+
+    scheduleLabel = new QLabel(this);
+    scheduleLabel->setText(scheduleStr);
+    scheduleLabel->setGeometry(390, 180, 201, 41);
+    scheduleLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
+    scheduleLabel->show();
+}
+
+void Widget::setFlowLabel(FlowAlgorithm flowAlgorithm){
+    if (flowLabel) {
+        flowLabel->deleteLater();
+        flowLabel = nullptr;
+    }
+
+    QString flowStr;
+    switch (flowAlgorithm) {
+        case FlowAlgorithm::EQUITY: flowStr = "EQUITY"; break;
+    }
+
+    // Crear nuevas etiquetas
+    flowLabel = new QLabel(this);
+    flowLabel->setText(flowStr);
+    flowLabel->setGeometry(640, 180, 171, 41);
+    flowLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
+    flowLabel->show();
 }
 
 
 
 void Widget::on_pushButton_clicked()
 {
-    ProcessManagement pm(ScheduleType::SJF, 3, FlowAlgorithm::EQUITY, 3);
+    ProcessManagement pm(ScheduleType::FCFS, 3, FlowAlgorithm::EQUITY, 3);
 
     // // Agregar procesos al lado izquierdo
     pm.newLeftProcess(Process::withBurstTime(1, 10));
@@ -107,6 +152,9 @@ void Widget::on_pushButton_clicked()
             std::cout << "No hay más procesos para ejecutar." << std::endl;
             break;
         }
+
+        setScheduleTypeLabel(data->scheduleType);
+        setFlowLabel(data->flowAlgorithm);
 
         // Imprimir la información de los datos obtenidos
         std::cout << "----------------------------------------" << std::endl;
@@ -153,9 +201,6 @@ void Widget::on_pushButton_clicked()
         CEthread_t thread;
         CEthread_create(&thread, thread_task, args);  // pasás el puntero al Widget
         CEthread_join(&thread);
-
-        // Pausar la ejecución para simular tiempo real
-        //sleep(0.5);
 
     }
 }
