@@ -26,6 +26,7 @@ public:
     void animateAndWait(SignDirection direction);
     void setScheduleTypeLabel(ScheduleType scheduler);
     void setFlowLabel(FlowAlgorithm flowAlgorithm);
+    void setQueueLabel(std::queue<int> queue);
 
 private slots:
     void on_pushButton_clicked();
@@ -34,5 +35,6 @@ private:
     Ui::Widget *ui;
     QLabel* scheduleLabel = nullptr;
     QLabel* flowLabel = nullptr;
+    QLabel* queueLabel = nullptr;
 };
 #endif // WIDGET_H

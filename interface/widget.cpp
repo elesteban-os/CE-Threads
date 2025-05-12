@@ -9,7 +9,8 @@
 #include <QThread>
 
 // struct para los parametros del thread
-struct ThreadArgs {
+struct ThreadArgs
+{
     Widget* widget;
     SignDirection direction;
 };
@@ -30,7 +31,8 @@ Widget::~Widget()
 }
 
 
-void Widget::animateAndWait(SignDirection direction) {
+void Widget::animateAndWait(SignDirection direction)
+{
     QLabel* movingLabel = new QLabel(this);
     movingLabel->setPixmap(QPixmap(":/assets/deportivo.png"));
     movingLabel->setScaledContents(true);
@@ -67,7 +69,8 @@ void Widget::animateAndWait(SignDirection direction) {
 }
 
 
-void* thread_task(void* arg) {
+void* thread_task(void* arg)
+{
     ThreadArgs* args = static_cast<ThreadArgs*>(arg);
     Widget* widget = args->widget;
     SignDirection direction = args->direction;
@@ -88,7 +91,8 @@ void* thread_task(void* arg) {
     return nullptr;
 }
 
-void Widget::setScheduleTypeLabel(ScheduleType scheduler){
+void Widget::setScheduleTypeLabel(ScheduleType scheduler)
+{
     if (scheduleLabel) {
         scheduleLabel->deleteLater();
         scheduleLabel = nullptr;
@@ -110,7 +114,8 @@ void Widget::setScheduleTypeLabel(ScheduleType scheduler){
     scheduleLabel->show();
 }
 
-void Widget::setFlowLabel(FlowAlgorithm flowAlgorithm){
+void Widget::setFlowLabel(FlowAlgorithm flowAlgorithm)
+{
     if (flowLabel) {
         flowLabel->deleteLater();
         flowLabel = nullptr;
@@ -131,20 +136,41 @@ void Widget::setFlowLabel(FlowAlgorithm flowAlgorithm){
     flowLabel->show();
 }
 
+void Widget::setQueueLabel(std::queue<int> queue)
+{
+    if (queueLabel) {
+        queueLabel->deleteLater();
+        queueLabel = nullptr;
+    }
+
+    QString queueStr = "";
+    while (!queue.empty()) {
+        queueStr += QString::number(queue.front()) + " ";
+        queue.pop();
+    }
+
+    // Crear nuevas etiquetas
+    queueLabel = new QLabel(this);
+    queueLabel->setText(queueStr.trimmed());
+    queueLabel->setGeometry(40, 610, 1081, 41);  // ajustá posición/tamaño según tu diseño
+    queueLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
+    queueLabel->show();
+}
+
 
 
 void Widget::on_pushButton_clicked()
 {
-    ProcessManagement pm(ScheduleType::FCFS, 3, FlowAlgorithm::SIGN, 3);
+    ProcessManagement pm(ScheduleType::PRIORITY, 3, FlowAlgorithm::EQUITY, 3);
 
     // // Agregar procesos al lado izquierdo
-    pm.newLeftProcess(Process::withBurstTime(1, 10));
-    pm.newLeftProcess(Process::withBurstTime(2, 5));
-    pm.newLeftProcess(Process::withBurstTime(3, 8));
+    pm.newLeftProcess(Process::withPriority(1, 10));
+    pm.newLeftProcess(Process::withPriority(2, 5));
+    pm.newLeftProcess(Process::withPriority(3, 8));
 
     // // Agregar procesos al lado derecho
-    pm.newRightProcess(Process::withBurstTime(4, 7));
-    pm.newRightProcess(Process::withBurstTime(5, 3));
+    pm.newRightProcess(Process::withPriority(4, 7));
+    pm.newRightProcess(Process::withPriority(5, 3));
     pm.newRightProcess(Process::withBurstTime(6, 12));
 
     while (true) {
@@ -157,6 +183,7 @@ void Widget::on_pushButton_clicked()
 
         setScheduleTypeLabel(data->scheduleType);
         setFlowLabel(data->flowAlgorithm);
+        setQueueLabel(data->actualProcessIDQueue);
 
         // Imprimir la información de los datos obtenidos
         std::cout << "----------------------------------------" << std::endl;
