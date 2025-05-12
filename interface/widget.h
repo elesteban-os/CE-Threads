@@ -1,6 +1,11 @@
 #ifndef WIDGET_H
 #define WIDGET_H
 
+#include "../flow/flow.h"
+#include "../schedulers/scheduler.h"
+#include "../processmanagement.h"
+#include "../CE_threads.h"
+
 #include <QWidget>
 
 QT_BEGIN_NAMESPACE
@@ -14,6 +19,7 @@ class Widget : public QWidget
 public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
+    void animateAndWait(SignDirection direction);
 
 private slots:
     void on_pushButton_clicked();

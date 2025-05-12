@@ -2,7 +2,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-CONFIG += c++11
+CONFIG += c++17
 
 # The following define makes your compiler emit warnings if you use
 # any Qt feature that has been marked deprecated (the exact warnings
@@ -17,10 +17,23 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     main.cpp \
-    widget.cpp
+    widget.cpp \
+    ../processmanagement.cpp \
+    ../flow/flow.cpp \
+    ../schedulers/scheduler.cpp \
+    ../schedulers/schedulealgorithms.cpp \
+    ../schedulers/process.cpp \
+    ../CE_threads.cpp
+
 
 HEADERS += \
-    widget.h
+    widget.h \
+    ../processmanagement.h \
+    ../flow/flow.h \
+    ../schedulers/scheduler.h \
+    ../schedulers/schedulealgorithms.h \
+    ../schedulers/process.h \
+    ../CE_threads.h
 
 FORMS += \
     widget.ui
