@@ -67,6 +67,7 @@ ProcessData* ProcessManagement::getData() {
         }
         pd->actualProcess = actualProcess;
         pd->scheduleType = schedulerType;
+        pd->flowAlgorithm = flowAlgorithm;
 
         return pd;
     } else {

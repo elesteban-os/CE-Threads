@@ -14,6 +14,7 @@ struct ProcessData {
     Process* actualProcess;
     bool processesEmpty;
     ScheduleType scheduleType;
+    FlowAlgorithm flowAlgorithm; 
 
     bool operator==(const ProcessData& other) const;
 };
