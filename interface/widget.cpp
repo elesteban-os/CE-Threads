@@ -23,6 +23,11 @@ Widget::Widget(QWidget *parent)
 {
     ui->setupUi(this);
     qRegisterMetaType<SignDirection>("SignDirection");
+    sportCarLabel = new QLabel(this);
+    sportCarLabel->setPixmap(QPixmap(":/assets/deportivo.png"));
+    sportCarLabel->setScaledContents(true);
+    sportCarLabel->resize(141, 101);  // Tamaño constante
+    sportCarLabel->hide();  // Se mostrará cuando se anime
 }
 
 Widget::~Widget()
@@ -33,31 +38,32 @@ Widget::~Widget()
 
 void Widget::animateAndWait(SignDirection direction)
 {
-    QLabel* movingLabel = new QLabel(this);
-    movingLabel->setPixmap(QPixmap(":/assets/deportivo.png"));
-    movingLabel->setScaledContents(true);
-    movingLabel->setGeometry(30, 310, 141, 101);
+    QPixmap pixmap(":/assets/deportivo.png");
+    QRect startRect;
 
     if (direction == SignDirection::LEFT) {
-        QPixmap original(":/assets/deportivo.png");
-        QPixmap mirrored = original.transformed(QTransform().scale(-1, 1));  // reflejar horizontalmente
-        movingLabel->setPixmap(mirrored);
-        movingLabel->setGeometry(980, 310, 141, 101);  // posición inicial desde la derecha
+        QPixmap mirrored = pixmap.transformed(QTransform().scale(-1, 1));
+        sportCarLabel->setPixmap(mirrored);
+        startRect = QRect(980, 310, 141, 101);  // desde la derecha
+    } else {
+        sportCarLabel->setPixmap(pixmap);
+        startRect = QRect(30, 310, 141, 101);  // desde la izquierda
     }
 
-    movingLabel->show();
+    sportCarLabel->setGeometry(startRect);
+    sportCarLabel->show();
 
-    QPropertyAnimation* anim = new QPropertyAnimation(movingLabel, "geometry");
+    QPropertyAnimation* anim = new QPropertyAnimation(sportCarLabel, "geometry");
     anim->setDuration(3000);
-    QRect startRect = movingLabel->geometry();
     QRect endRect = (direction == SignDirection::RIGHT)
-                    ? startRect.translated(950, 0)    // derecha
-                    : startRect.translated(-950, 0);  // izquierda
+                    ? startRect.translated(950, 0)
+                    : startRect.translated(-950, 0);
     anim->setStartValue(startRect);
     anim->setEndValue(endRect);
 
-    connect(anim, &QPropertyAnimation::finished, [movingLabel, anim]() {
-        movingLabel->deleteLater();
+    // No destruimos el label, solo ocultamos cuando termina
+    connect(anim, &QPropertyAnimation::finished, [this, anim]() {
+        sportCarLabel->hide();
         anim->deleteLater();
     });
 
@@ -93,11 +99,6 @@ void* thread_task(void* arg)
 
 void Widget::setScheduleTypeLabel(ScheduleType scheduler)
 {
-    if (scheduleLabel) {
-        scheduleLabel->deleteLater();
-        scheduleLabel = nullptr;
-    }
-
     QString scheduleStr;
     switch (scheduler) {
         case ScheduleType::FCFS: scheduleStr = "FCFS"; break;
@@ -107,20 +108,19 @@ void Widget::setScheduleTypeLabel(ScheduleType scheduler)
         case ScheduleType::REALTIME: scheduleStr = "REALTIME"; break;
     }
 
-    scheduleLabel = new QLabel(this);
+    if (!scheduleLabel) {
+        scheduleLabel = new QLabel(this);
+        scheduleLabel->setText(scheduleStr);
+        scheduleLabel->setGeometry(390, 180, 201, 41);
+        scheduleLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
+        scheduleLabel->show();
+    }
+
     scheduleLabel->setText(scheduleStr);
-    scheduleLabel->setGeometry(390, 180, 201, 41);
-    scheduleLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
-    scheduleLabel->show();
 }
 
 void Widget::setFlowLabel(FlowAlgorithm flowAlgorithm)
 {
-    if (flowLabel) {
-        flowLabel->deleteLater();
-        flowLabel = nullptr;
-    }
-
     QString flowStr;
     switch (flowAlgorithm) {
         case FlowAlgorithm::EQUITY: flowStr = "EQUIDAD"; break;
@@ -128,33 +128,35 @@ void Widget::setFlowLabel(FlowAlgorithm flowAlgorithm)
         case FlowAlgorithm::FIFO: flowStr = "FIFO"; break;
     }
 
-    // Crear nuevas etiquetas
-    flowLabel = new QLabel(this);
+    if (!flowLabel) {
+        // Crear nuevas etiquetas
+        flowLabel = new QLabel(this);
+        flowLabel->setText(flowStr);
+        flowLabel->setGeometry(640, 180, 171, 41);
+        flowLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
+        flowLabel->show();
+    }
+
     flowLabel->setText(flowStr);
-    flowLabel->setGeometry(640, 180, 171, 41);
-    flowLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
-    flowLabel->show();
 }
 
 void Widget::setQueueLabel(std::queue<int> queue)
 {
-    if (queueLabel) {
-        queueLabel->deleteLater();
-        queueLabel = nullptr;
-    }
-
     QString queueStr = "";
     while (!queue.empty()) {
         queueStr += QString::number(queue.front()) + " ";
         queue.pop();
     }
 
-    // Crear nuevas etiquetas
-    queueLabel = new QLabel(this);
+    if (!queueLabel) {
+        queueLabel = new QLabel(this);
+        queueLabel->setText(queueStr.trimmed());
+        queueLabel->setGeometry(40, 610, 1081, 41);
+        queueLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
+        queueLabel->show();
+    }
+
     queueLabel->setText(queueStr.trimmed());
-    queueLabel->setGeometry(40, 610, 1081, 41);  // ajustá posición/tamaño según tu diseño
-    queueLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
-    queueLabel->show();
 }
 
 

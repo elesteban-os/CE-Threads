@@ -36,5 +36,6 @@ private:
     QLabel* scheduleLabel = nullptr;
     QLabel* flowLabel = nullptr;
     QLabel* queueLabel = nullptr;
+    QLabel* sportCarLabel = nullptr;
 };
 #endif // WIDGET_H
