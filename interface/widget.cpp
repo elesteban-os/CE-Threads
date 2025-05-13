@@ -40,6 +40,11 @@ Widget::Widget(QWidget *parent)
     queueLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
     queueLabel->show();
 
+    actualThreadLabel = new QLabel(this);
+    actualThreadLabel->setGeometry(400, 560, 61, 31);
+    actualThreadLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
+    actualThreadLabel->show();
+
     /* setear los labels relacionados al carro deportivo */
     sportCarPixmap = QPixmap(":/assets/deportivo.png");
     sportCarPixmapMirrored = sportCarPixmap.transformed(QTransform().scale(-1, 1));
@@ -150,6 +155,12 @@ void Widget::setQueueLabel(std::queue<int> queue)
     queueLabel->setText(queueStr.trimmed());
 }
 
+void Widget::setActualThreadLabel(int id)
+{
+    QString idstr = QString::number(id);
+    actualThreadLabel->setText(idstr);
+}
+
 
 
 void Widget::on_pushButton_clicked()
@@ -177,6 +188,7 @@ void Widget::on_pushButton_clicked()
         setScheduleTypeLabel(data->scheduleType);
         setFlowLabel(data->flowAlgorithm);
         setQueueLabel(data->actualProcessIDQueue);
+        setActualThreadLabel(data->actualProcess->getProcessID());
 
         // Imprimir la información de los datos obtenidos
         std::cout << "----------------------------------------" << std::endl;
@@ -225,4 +237,9 @@ void Widget::on_pushButton_clicked()
         CEthread_join(&thread);
 
     }
+    // ocultar los labels despued de terminar la simulacion
+    scheduleLabel->hide();
+    flowLabel->hide();
+    queueLabel->hide();
+    actualThreadLabel->hide();
 }

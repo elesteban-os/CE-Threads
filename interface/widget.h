@@ -27,6 +27,7 @@ public:
     void setScheduleTypeLabel(ScheduleType scheduler);
     void setFlowLabel(FlowAlgorithm flowAlgorithm);
     void setQueueLabel(std::queue<int> queue);
+    void setActualThreadLabel(int id);
 
 private slots:
     void on_pushButton_clicked();
@@ -36,6 +37,7 @@ private:
     QLabel* scheduleLabel = nullptr;
     QLabel* flowLabel = nullptr;
     QLabel* queueLabel = nullptr;
+    QLabel* actualThreadLabel = nullptr;
     QLabel* sportCarLabel = nullptr;
     QPixmap sportCarPixmap;
     QPixmap sportCarPixmapMirrored;
