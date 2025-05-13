@@ -37,5 +37,7 @@ private:
     QLabel* flowLabel = nullptr;
     QLabel* queueLabel = nullptr;
     QLabel* sportCarLabel = nullptr;
+    QPixmap sportCarPixmap;
+    QPixmap sportCarPixmapMirrored;
 };
 #endif // WIDGET_H

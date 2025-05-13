@@ -23,6 +23,10 @@ Widget::Widget(QWidget *parent)
 {
     ui->setupUi(this);
     qRegisterMetaType<SignDirection>("SignDirection");
+
+    sportCarPixmap = QPixmap(":/assets/deportivo.png"); // Cargar pixmap normal de carro deportivo
+    sportCarPixmapMirrored = sportCarPixmap.transformed(QTransform().scale(-1, 1)); // Cargar y almacenar pixmap reflejado una sola vez
+    // preparar el label del carro deportivo una sola vez y reutilizarlo
     sportCarLabel = new QLabel(this);
     sportCarLabel->setPixmap(QPixmap(":/assets/deportivo.png"));
     sportCarLabel->setScaledContents(true);
@@ -38,15 +42,13 @@ Widget::~Widget()
 
 void Widget::animateAndWait(SignDirection direction)
 {
-    QPixmap pixmap(":/assets/deportivo.png");
     QRect startRect;
 
     if (direction == SignDirection::LEFT) {
-        QPixmap mirrored = pixmap.transformed(QTransform().scale(-1, 1));
-        sportCarLabel->setPixmap(mirrored);
+        sportCarLabel->setPixmap(sportCarPixmapMirrored);
         startRect = QRect(980, 310, 141, 101);  // desde la derecha
     } else {
-        sportCarLabel->setPixmap(pixmap);
+        sportCarLabel->setPixmap(sportCarPixmap);
         startRect = QRect(30, 310, 141, 101);  // desde la izquierda
     }
 
