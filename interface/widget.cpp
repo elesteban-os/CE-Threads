@@ -24,14 +24,31 @@ Widget::Widget(QWidget *parent)
     ui->setupUi(this);
     qRegisterMetaType<SignDirection>("SignDirection");
 
-    sportCarPixmap = QPixmap(":/assets/deportivo.png"); // Cargar pixmap normal de carro deportivo
-    sportCarPixmapMirrored = sportCarPixmap.transformed(QTransform().scale(-1, 1)); // Cargar y almacenar pixmap reflejado una sola vez
-    // preparar el label del carro deportivo una sola vez y reutilizarlo
+    /* setear los labels de informacion flujo, calendarizacion y cola */
+    scheduleLabel = new QLabel(this);
+    scheduleLabel->setGeometry(390, 180, 201, 41);
+    scheduleLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
+    scheduleLabel->show();
+
+    flowLabel = new QLabel(this);
+    flowLabel->setGeometry(640, 180, 171, 41);
+    flowLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
+    flowLabel->show();
+
+    queueLabel = new QLabel(this);
+    queueLabel->setGeometry(40, 610, 1081, 41);
+    queueLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
+    queueLabel->show();
+
+    /* setear los labels relacionados al carro deportivo */
+    sportCarPixmap = QPixmap(":/assets/deportivo.png");
+    sportCarPixmapMirrored = sportCarPixmap.transformed(QTransform().scale(-1, 1));
+
     sportCarLabel = new QLabel(this);
-    sportCarLabel->setPixmap(QPixmap(":/assets/deportivo.png"));
+    sportCarLabel->setPixmap(sportCarPixmap);
     sportCarLabel->setScaledContents(true);
-    sportCarLabel->resize(141, 101);  // Tamaño constante
-    sportCarLabel->hide();  // Se mostrará cuando se anime
+    sportCarLabel->resize(141, 101);
+    sportCarLabel->hide();
 }
 
 Widget::~Widget()
@@ -109,15 +126,6 @@ void Widget::setScheduleTypeLabel(ScheduleType scheduler)
         case ScheduleType::PRIORITY: scheduleStr = "PRIORIDAD"; break;
         case ScheduleType::REALTIME: scheduleStr = "REALTIME"; break;
     }
-
-    if (!scheduleLabel) {
-        scheduleLabel = new QLabel(this);
-        scheduleLabel->setText(scheduleStr);
-        scheduleLabel->setGeometry(390, 180, 201, 41);
-        scheduleLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
-        scheduleLabel->show();
-    }
-
     scheduleLabel->setText(scheduleStr);
 }
 
@@ -129,16 +137,6 @@ void Widget::setFlowLabel(FlowAlgorithm flowAlgorithm)
         case FlowAlgorithm::SIGN: flowStr = "LETRERO"; break;
         case FlowAlgorithm::FIFO: flowStr = "FIFO"; break;
     }
-
-    if (!flowLabel) {
-        // Crear nuevas etiquetas
-        flowLabel = new QLabel(this);
-        flowLabel->setText(flowStr);
-        flowLabel->setGeometry(640, 180, 171, 41);
-        flowLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
-        flowLabel->show();
-    }
-
     flowLabel->setText(flowStr);
 }
 
@@ -149,15 +147,6 @@ void Widget::setQueueLabel(std::queue<int> queue)
         queueStr += QString::number(queue.front()) + " ";
         queue.pop();
     }
-
-    if (!queueLabel) {
-        queueLabel = new QLabel(this);
-        queueLabel->setText(queueStr.trimmed());
-        queueLabel->setGeometry(40, 610, 1081, 41);
-        queueLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
-        queueLabel->show();
-    }
-
     queueLabel->setText(queueStr.trimmed());
 }
 
@@ -165,17 +154,17 @@ void Widget::setQueueLabel(std::queue<int> queue)
 
 void Widget::on_pushButton_clicked()
 {
-    ProcessManagement pm(ScheduleType::PRIORITY, 3, FlowAlgorithm::EQUITY, 3);
+    ProcessManagement pm(ScheduleType::SJF, 3, FlowAlgorithm::SIGN, 3);
 
     // // Agregar procesos al lado izquierdo
-    pm.newLeftProcess(Process::withPriority(1, 10));
-    pm.newLeftProcess(Process::withPriority(2, 5));
-    pm.newLeftProcess(Process::withPriority(3, 8));
+    pm.newLeftProcess(Process::withBurstTime(1, 1));
+    pm.newLeftProcess(Process::withBurstTime(2, 2));
+    pm.newLeftProcess(Process::withBurstTime(3, 3));
 
     // // Agregar procesos al lado derecho
-    pm.newRightProcess(Process::withPriority(4, 7));
-    pm.newRightProcess(Process::withPriority(5, 3));
-    pm.newRightProcess(Process::withBurstTime(6, 12));
+    pm.newRightProcess(Process::withBurstTime(4, 4));
+    pm.newRightProcess(Process::withBurstTime(5, 5));
+    pm.newRightProcess(Process::withBurstTime(6, 6));
 
     while (true) {
         ProcessData* data = pm.getData();
