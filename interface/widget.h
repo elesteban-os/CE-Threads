@@ -11,6 +11,8 @@
 #include <atomic>
 #include <QKeyEvent>
 #include <QApplication>
+#include <QWaitCondition>
+#include <QMutex>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Widget; }
@@ -23,7 +25,7 @@ class Widget : public QWidget
 public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
-    void animateAndWait(SignDirection direction);
+    Q_INVOKABLE void animateAndWait(SignDirection direction);
     void setScheduleTypeLabel(ScheduleType scheduler);
     void setFlowLabel(FlowAlgorithm flowAlgorithm);
     void setQueueLabel(std::queue<int> queue);
@@ -41,5 +43,8 @@ private:
     QLabel* sportCarLabel = nullptr;
     QPixmap sportCarPixmap;
     QPixmap sportCarPixmapMirrored;
+
+signals:
+    void animationFinished();
 };
 #endif // WIDGET_H

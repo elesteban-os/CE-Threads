@@ -28,22 +28,18 @@ Widget::Widget(QWidget *parent)
     scheduleLabel = new QLabel(this);
     scheduleLabel->setGeometry(390, 180, 201, 41);
     scheduleLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
-    scheduleLabel->show();
 
     flowLabel = new QLabel(this);
     flowLabel->setGeometry(640, 180, 171, 41);
     flowLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
-    flowLabel->show();
 
     queueLabel = new QLabel(this);
     queueLabel->setGeometry(40, 610, 1081, 41);
     queueLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
-    queueLabel->show();
 
     actualThreadLabel = new QLabel(this);
     actualThreadLabel->setGeometry(400, 560, 61, 31);
     actualThreadLabel->setStyleSheet("color: white; font: 14pt Nimbus Sans Narrow;");
-    actualThreadLabel->show();
 
     /* setear los labels relacionados al carro deportivo */
     sportCarPixmap = QPixmap(":/assets/deportivo.png");
@@ -68,10 +64,10 @@ void Widget::animateAndWait(SignDirection direction)
 
     if (direction == SignDirection::LEFT) {
         sportCarLabel->setPixmap(sportCarPixmapMirrored);
-        startRect = QRect(980, 310, 141, 101);  // desde la derecha
+        startRect = QRect(980, 310, 141, 101);
     } else {
         sportCarLabel->setPixmap(sportCarPixmap);
-        startRect = QRect(30, 310, 141, 101);  // desde la izquierda
+        startRect = QRect(30, 310, 141, 101);
     }
 
     sportCarLabel->setGeometry(startRect);
@@ -85,17 +81,13 @@ void Widget::animateAndWait(SignDirection direction)
     anim->setStartValue(startRect);
     anim->setEndValue(endRect);
 
-    // No destruimos el label, solo ocultamos cuando termina
     connect(anim, &QPropertyAnimation::finished, [this, anim]() {
         sportCarLabel->hide();
         anim->deleteLater();
+        emit animationFinished();  // Señal para desbloquear el hilo
     });
 
     anim->start();
-
-    QEventLoop loop;
-    connect(anim, &QPropertyAnimation::finished, &loop, &QEventLoop::quit);
-    loop.exec();
 }
 
 
@@ -105,19 +97,18 @@ void* thread_task(void* arg)
     Widget* widget = args->widget;
     SignDirection direction = args->direction;
 
-    std::cout << "ejecutando hilo" << std::endl;
+    QEventLoop loop;
 
-    if (QThread::currentThread() == widget->thread()) {
-        widget->animateAndWait(direction);
-    } else {
-        bool success = QMetaObject::invokeMethod(widget, "animateAndWait", Qt::BlockingQueuedConnection,
-                                                 Q_ARG(SignDirection, direction));
-        if (!success) {
-            std::cerr << "Error: invokeMethod falló." << std::endl;
-        }
-    }
-    delete args;  // liberar memoria después de usar
+    QObject::connect(widget, &Widget::animationFinished, &loop, &QEventLoop::quit, Qt::QueuedConnection);
 
+    // Llamar a la animación desde el hilo de la GUI
+    QMetaObject::invokeMethod(widget, "animateAndWait",
+                              Qt::QueuedConnection,
+                              Q_ARG(SignDirection, direction));
+    std::cout << "esperando respuesta..."<< std::endl;
+    loop.exec();  // Espera hasta que la animación emita animationFinished
+
+    delete args;
     return nullptr;
 }
 
@@ -132,6 +123,7 @@ void Widget::setScheduleTypeLabel(ScheduleType scheduler)
         case ScheduleType::REALTIME: scheduleStr = "REALTIME"; break;
     }
     scheduleLabel->setText(scheduleStr);
+    scheduleLabel->show();
 }
 
 void Widget::setFlowLabel(FlowAlgorithm flowAlgorithm)
@@ -143,6 +135,7 @@ void Widget::setFlowLabel(FlowAlgorithm flowAlgorithm)
         case FlowAlgorithm::FIFO: flowStr = "FIFO"; break;
     }
     flowLabel->setText(flowStr);
+    flowLabel->show();
 }
 
 void Widget::setQueueLabel(std::queue<int> queue)
@@ -153,12 +146,14 @@ void Widget::setQueueLabel(std::queue<int> queue)
         queue.pop();
     }
     queueLabel->setText(queueStr.trimmed());
+    queueLabel->show();
 }
 
 void Widget::setActualThreadLabel(int id)
 {
     QString idstr = QString::number(id);
     actualThreadLabel->setText(idstr);
+    actualThreadLabel->show();
 }
 
 
@@ -233,11 +228,11 @@ void Widget::on_pushButton_clicked()
         ThreadArgs* args = new ThreadArgs{ this, data->direction };
 
         CEthread_t thread;
-        CEthread_create(&thread, thread_task, args);  // pasás el puntero al Widget
+        CEthread_create(&thread, thread_task, args);
         CEthread_join(&thread);
 
     }
-    // ocultar los labels despued de terminar la simulacion
+    // ocultar los labels despues de terminar la simulacion
     scheduleLabel->hide();
     flowLabel->hide();
     queueLabel->hide();
