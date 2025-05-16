@@ -15,6 +15,7 @@ struct ThreadArgs
     SignDirection direction;
     int threadID;
     int time;
+    int percentage;
 };
 
 Q_DECLARE_METATYPE(SignDirection)
@@ -68,10 +69,10 @@ void Widget::animateAndWait(carImageData* carData, int percentage, int time)
     SignDirection direction = carData->direction;
 
     QPropertyAnimation* anim = new QPropertyAnimation(carLabel, "geometry");
-    anim->setDuration(3000);
+    anim->setDuration(time * 500);
     QRect endRect = (direction == SignDirection::RIGHT)
-                    ? startRect->translated((950 * percentage) / 100, 0)
-                    : startRect->translated((-950 * percentage) / 100, 0);
+                    ? startRect->translated(((1160 * percentage) / 100) - startRect->x(), 0)
+                    : startRect->translated(((-1160 * percentage) / 100) + (980 - startRect->x()), 0);
     QRect* endRectCpy = new QRect(endRect);
     anim->setStartValue(*startRect);
     anim->setEndValue(endRect);
@@ -79,8 +80,8 @@ void Widget::animateAndWait(carImageData* carData, int percentage, int time)
     // Eliminar el QLabel cuando el porcentaje llegue a 100
     if (percentage == 100) {
         connect(anim, &QPropertyAnimation::finished, [this, carLabel, anim]() {
-            carLabel->deleteLater();
-            anim->deleteLater();
+            //carLabel->deleteLater();
+            //anim->deleteLater();
             emit animationFinished();  // Señal para desbloquear el hilo
         });
     } else {
@@ -127,6 +128,8 @@ void* thread_task(void* arg)
     ThreadArgs* args = static_cast<ThreadArgs*>(arg);
     Widget* widget = args->widget;
     SignDirection direction = args->direction;
+    int time = args->time;
+    int percentage = args->percentage;
 
     bool found = false;
     carImageData* newCarImage;
@@ -150,8 +153,8 @@ void* thread_task(void* arg)
         QMetaObject::invokeMethod(widget, "animateAndWait",
                                   Qt::QueuedConnection,
                                   Q_ARG(carImageData*, newCarImage),
-                                  Q_ARG(int, 30),
-                                  Q_ARG(int, 1));
+                                  Q_ARG(int, percentage),
+                                  Q_ARG(int, time));
         std::cout << "esperando respuesta..."<< std::endl;
         loop.exec();  // Espera hasta que la animación emita animationFinished
         std::cout << "NO" << std::endl;
@@ -163,8 +166,8 @@ void* thread_task(void* arg)
         QMetaObject::invokeMethod(widget, "animateAndWait",
                                   Qt::QueuedConnection,
                                   Q_ARG(carImageData*, newCarImage),
-                                  Q_ARG(int, 30),
-                                  Q_ARG(int, 1));
+                                  Q_ARG(int, percentage),
+                                  Q_ARG(int, time));
         std::cout << "esperando respuesta..."<< std::endl;
         loop.exec();  // Espera hasta que la animación emita animationFinished
     }
@@ -277,7 +280,26 @@ void Widget::on_pushButton_clicked()
         }
         std::cout << std::endl;
 
-        ThreadArgs* args = new ThreadArgs{ this, data->direction, data->actualProcess->getProcessID(), 1};
+        // Imprimir el algoritmo de flujo:
+        std::cout << "Algoritmo de flujo: ";
+        switch (data->flowAlgorithm) {
+            case FlowAlgorithm::EQUITY:
+            std::cout << "Equidad";
+            break;
+            case FlowAlgorithm::SIGN:
+            std::cout << "Letrero";
+            break;
+            case FlowAlgorithm::FIFO:
+            std::cout << "FIFO";
+            break;
+        }
+        std::cout << std::endl;
+
+
+        std::cout << "Tiempo dn movimiento: " << data->time << std::endl;
+        std::cout << "Porcentaje de la calle que se debe mover " << data->street_percentage << "%" << std::endl;
+
+        ThreadArgs* args = new ThreadArgs{ this, data->direction, data->actualProcess->getProcessID(), data->time, data->street_percentage};
 
         CEthread_t thread;
 
@@ -288,6 +310,13 @@ void Widget::on_pushButton_clicked()
         std::cout << "Join thread" << std::endl;
 
     }
+    for (auto& carImage : carImages) {
+        //carImage->label->deleteLater();
+        carImage->label->hide();
+        delete carImage->actualRect;
+        delete carImage;
+    }
+    carImages.clear();
     // ocultar los labels despues de terminar la simulacion
     scheduleLabel->hide();
     flowLabel->hide();

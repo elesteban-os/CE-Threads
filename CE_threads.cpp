@@ -16,44 +16,67 @@ typedef struct {
  * static function defined to give it to "clone"
  */
 static int thread_func(void *arg) {
-    thread_args_t *args = (thread_args_t *)arg; // cast the arguments recievied to type thread_args_t
+    if (!arg) {
+        std::cout << "Error: Argumento nulo en thread_func." << std::endl;
+        return -1;
+    }
+
+    thread_args_t *args = static_cast<thread_args_t *>(arg);
     args->func(args->arg);
-    sem_post(&args->thread->finished);  // notifica que terminó
-    delete args; // frees the dinamic memory used to create the thread_args_t
+    sem_post(&args->thread->finished);
+    delete args;
     return 0;
 }
 
 /*
- * CE_thread function to create threads
+ * static function defined to give it to "clone"
  */
 int CEthread_create(CEthread_t *thread, void *(*start_routine)(void *), void *arg) {
-    sem_init(&thread->finished, 0, 0);  // 0 indicates shared only between threads
-    thread->stack = malloc(STACK_SIZE); // reserve dynamically memory for the stack of the thread
-    if (!thread->stack) return -1; // verify if stack was reserved correctly
+    if (sem_init(&thread->finished, 0, 0) != 0) {
+        std::cout << "Error: No se pudo inicializar el semáforo." << std::endl;
+        return -1;
+    }
 
-    thread_args_t *args = new thread_args_t; // reserve memory for the thread_args_t struct
-    args->func = start_routine; // assign start_routine (the function to be executed) in the pointer func
-    args->arg = arg; // assign the arguments recieved to the pointer args (this args will be passed to the function that will be executed)
-    args->thread = thread; // assign the thread to the struct
-    
-    // invoke the system call "clone"
+    thread->stack = malloc(STACK_SIZE);
+    if (!thread->stack) {
+        std::cout << "Error: No se pudo asignar memoria para la pila del hilo." << std::endl;
+        return -1;
+    }
+
+    thread_args_t *args = new thread_args_t;
+    if (!args) {
+        std::cout << "Error: No se pudo asignar memoria para los argumentos del hilo." << std::endl;
+        free(thread->stack);
+        return -1;
+    }
+
+    args->func = start_routine;
+    args->arg = arg;
+    args->thread = thread;
+
     int flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD;
-    thread->tid = clone(thread_func, // function to be executed
-                        static_cast<char *>(thread->stack) + STACK_SIZE, // pointer to the end of the stack
-                        flags,  // flag to indicate the system that needs to send a sigal when the thread finish
-                        args); // arguments
-                        // if the thread had success returns the thread ID, if not, returns -1
-    
-    sleep(0.1);  // Esperar un segundo para que los hilos terminen de crearse
+    thread->tid = clone(thread_func,
+                        static_cast<char *>(thread->stack) + STACK_SIZE,
+                        flags,
+                        args);
 
-    return (thread->tid == -1) ? -1 : 0; // compare if the execution returns -1, then returns -1, if not, return 0 (success)
+    if (thread->tid == -1) {
+        std::cout << "Error: No se pudo crear el hilo con clone." << std::endl;
+        delete args;
+        free(thread->stack);
+        return -1;
+    }
+
+    return 0;
 }
 
 /*
  * CE_thread function to wait the end of a thread execution and then clean resources
  */
 int CEthread_join(CEthread_t *thread) {
+    std::cout << "antes" << std::endl;
     sem_wait(&thread->finished);  // wait until the thread finish
+    std::cout << "despues" << std::endl;
     //sem_destroy(&thread->finished);  // lclean the semaphore
     //std::free(thread->stack); // frees the stack
     return 0;
