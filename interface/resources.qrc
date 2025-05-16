@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>assets/deportivo.png</file>
+        <file>assets/normal.png</file>
+        <file>assets/emergencia.png</file>
     </qresource>
 </RCC>

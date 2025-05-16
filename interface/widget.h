@@ -46,7 +46,7 @@ public:
     void setActualThreadLabel(int id);
 
     std::vector<carImageData*> carImages;
-    carImageData* addNewCarImage(int carID, SignDirection direction);
+    carImageData* addNewCarImage(int carID, SignDirection direction, int typecar);
 
 private slots:
     void on_pushButton_clicked();
@@ -63,9 +63,15 @@ private:
     QLabel* queueLabel = nullptr;
     QLabel* actualThreadLabel = nullptr;
     QLabel* sportCarLabel = nullptr;
+    QLabel* normalCarLabel = nullptr;
+    QLabel* ambulanceCarLabel = nullptr;
     QPixmap sportCarPixmap;
     QPixmap sportCarPixmapMirrored;
-    ProcessManagement* pm = new ProcessManagement(ScheduleType::FCFS, 3, FlowAlgorithm::EQUITY, 3, 3, 100);
+    QPixmap normalCarPixmap;
+    QPixmap normalCarPixmapMirrored;
+    QPixmap ambulanceCarPixmap;
+    QPixmap ambulanceCarPixmapMirrored;
+    ProcessManagement* pm = new ProcessManagement(ScheduleType::PRIORITY, 3, FlowAlgorithm::EQUITY, 3, 3, 100);
     int carID = 7;
     QComboBox* comboBoxType;
     QComboBox* comboBoxSide;

@@ -18,6 +18,7 @@ struct ThreadArgs
     int threadID;
     int time;
     int percentage;
+    int typecar;
 };
 
 Q_DECLARE_METATYPE(SignDirection)
@@ -78,6 +79,25 @@ Widget::Widget(QWidget *parent)
     sportCarLabel->setScaledContents(true);
     sportCarLabel->resize(141, 101);
     sportCarLabel->hide();
+
+    normalCarPixmap = QPixmap(":/assets/normal.png");
+    normalCarPixmapMirrored = normalCarPixmap.transformed(QTransform().scale(-1, 1));
+
+    normalCarLabel = new QLabel(this);
+    normalCarLabel->setPixmap(normalCarPixmap);
+    normalCarLabel->setScaledContents(true);
+    normalCarLabel->resize(141, 141);
+    normalCarLabel->hide();
+
+    ambulanceCarPixmap = QPixmap(":/assets/emergencia.png");
+    ambulanceCarPixmapMirrored = ambulanceCarPixmap.transformed(QTransform().scale(-1, 1));
+
+    ambulanceCarLabel = new QLabel(this);
+    ambulanceCarLabel->setPixmap(ambulanceCarPixmap);
+    ambulanceCarLabel->setScaledContents(true);
+    ambulanceCarLabel->resize(141, 141);
+    ambulanceCarLabel->hide();
+
 }
 
 Widget::~Widget()
@@ -92,10 +112,10 @@ void Widget::generateNewCar(){
     SignDirection direction = (sideStr == "Izquierda") ? SignDirection::LEFT : SignDirection::RIGHT;
 
     if (direction == SignDirection::LEFT) {
-        pm->newLeftProcess(Process::withBurstTime(carID, 3));
+        pm->newLeftProcess(Process::withPriority(carID, 3));
         carID++;
     } else {
-        pm->newRightProcess(Process::withBurstTime(carID, 3));
+        pm->newRightProcess(Process::withPriority(carID, 3));
         carID++;
     }
     qDebug() << "Carro generado - Tipo:" << carType << "| Lado:" << sideStr << "| ID:" << carID;
@@ -134,18 +154,37 @@ void Widget::animateAndWait(carImageData* carData, int percentage, int time)
     anim->start();
 }
 
-carImageData* Widget::addNewCarImage(int carID, SignDirection direction) {
+carImageData* Widget::addNewCarImage(int carID, SignDirection direction, int typecar) {
     QRect* startRect;
     QLabel* carLabel = new QLabel(this);
     carLabel->setScaledContents(true);
     carLabel->resize(141, 101);
-
-    if (direction == SignDirection::LEFT) {
-        carLabel->setPixmap(sportCarPixmapMirrored);
-        startRect = new QRect(980, 310, 141, 101);  // desde la derecha
-    } else {
-        carLabel->setPixmap(sportCarPixmap);
-        startRect = new QRect(30, 310, 141, 101);  // desde la izquierda
+    if (typecar == 1){
+        if (direction == SignDirection::LEFT) {
+            carLabel->setPixmap(ambulanceCarPixmapMirrored);
+            startRect = new QRect(980, 290, 141, 141);  // desde la derecha
+        } else {
+            carLabel->setPixmap(ambulanceCarPixmap);
+            startRect = new QRect(30, 290, 141, 141);  // desde la izquierda
+        }
+    }
+    if (typecar == 2){
+        if (direction == SignDirection::LEFT) {
+            carLabel->setPixmap(sportCarPixmapMirrored);
+            startRect = new QRect(980, 420, 141, 101);  // desde la derecha
+        } else {
+            carLabel->setPixmap(sportCarPixmap);
+            startRect = new QRect(30, 420, 141, 101);  // desde la izquierda
+        }
+    }
+    if (typecar == 3){
+        if (direction == SignDirection::LEFT) {
+            carLabel->setPixmap(normalCarPixmapMirrored);
+            startRect = new QRect(980, 350, 141, 141);  // desde la derecha
+        } else {
+            carLabel->setPixmap(normalCarPixmap);
+            startRect = new QRect(30, 350, 141, 141);  // desde la izquierda
+        }
     }
 
     carLabel->setGeometry(*startRect);
@@ -188,7 +227,7 @@ void* thread_task(void* arg)
     if (!found) {
         // Agregar el nuevo QLabel al vector de carImages
         // Llamar a la animación desde el hilo de la GUI
-        newCarImage = widget->addNewCarImage(args->threadID, direction);
+        newCarImage = widget->addNewCarImage(args->threadID, direction, args->typecar);
         QMetaObject::invokeMethod(widget, "animateAndWait",
                                   Qt::QueuedConnection,
                                   Q_ARG(carImageData*, newCarImage),
@@ -334,7 +373,7 @@ void Widget::on_pushButton_clicked()
         std::cout << "Tiempo dn movimiento: " << data->time << std::endl;
         std::cout << "Porcentaje de la calle que se debe mover " << data->street_percentage << "%" << std::endl;
 
-        ThreadArgs* args = new ThreadArgs{ this, data->direction, data->actualProcess->getProcessID(), data->time, data->street_percentage};
+        ThreadArgs* args = new ThreadArgs{ this, data->direction, data->actualProcess->getProcessID(), data->time, data->street_percentage, data->actualProcess->getPriority()};
 
         CEthread_t thread;
         CEthread_create(&thread, thread_task, args);
