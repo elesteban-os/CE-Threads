@@ -83,8 +83,8 @@ class RR : public ScheduleAlgorithm {
             Process *current = tmp.front(); 
             tmp.pop();
 
-            int remaining_time = std::max(0, current->getRemainingTime() - quantum);
-            current->setRemainingTime(remaining_time);
+            int remaining_time = std::max(0, current->getRemainingTime_RR() - quantum);
+            current->setRemainingTime_RR(remaining_time);
 
             q.push(*current);
 
@@ -120,21 +120,25 @@ class RR : public ScheduleAlgorithm {
 class RealTime : public ScheduleAlgorithm {
     std::queue<Process> schedule(std::vector<Process> *dataProcess, int queue_length, int quantum = 0) override {
         std::queue<Process> q;
-        std::vector<Process>* dataProcessTmp = new std::vector<Process>();
-        std::vector<Process*> tmp;
-        std::queue<Process*> finished_processes;
-        for (size_t i = 0; i < dataProcess->size() && dataProcessTmp->size() < static_cast<size_t>(queue_length); ++i) {
-            dataProcessTmp->push_back((*dataProcess)[i]);
+        std::vector<Process> dataProcessTmp;
+        for (size_t i = 0; i < queue_length && i < dataProcess->size(); ++i) {
+            std::cout << "Process: " << (*dataProcess)[i].getProcessID() << " Remaining Time: " << (*dataProcess)[i].getRemainingTime() << std::endl;
+            dataProcessTmp.push_back((*dataProcess)[i]);
         }
+        std::vector<Process*> tmp;
+        std::queue<Process> finished_processes;
+        std::cout << "---------------------------" << std::endl;
+
 
         // Ordenar los procesos por periodos (prioridad)
-        std::sort(dataProcessTmp->begin(), dataProcessTmp->end(), [](const Process& a, const Process& b) {
+        std::sort(dataProcessTmp.begin(), dataProcessTmp.end(), [](const Process& a, const Process& b) {
             return a.getPeriod() < b.getPeriod(); 
         });
 
         int time = 0;
-        while (!dataProcessTmp->empty()) {
-            for (Process& p : *dataProcessTmp) {
+
+        while (!dataProcessTmp.empty()) {
+            for (Process& p : dataProcessTmp) {
                 // Comprobar si entro un nuevo proceso en el ciclo
                 if (time % p.getPeriod() == 0 && p.getRemainingTime() != 0) {
                     tmp.push_back(&p);
@@ -163,15 +167,16 @@ class RealTime : public ScheduleAlgorithm {
                 // Comprobar si el proceso actual termino
                 if (remaining_time == 0) {
                     // Eliminarlo de la lista de procesos temporal
-                    for (auto it = dataProcessTmp->begin(); it != dataProcessTmp->end(); ++it) {
+                    for (auto it = dataProcessTmp.begin(); it != dataProcessTmp.end(); ++it) {
                         if (it->getRemainingTime() == 0) {
-                            dataProcessTmp->erase(it);
-                            // Agregar al proceso a la lista de procesos eliminados
-                            finished_processes.push(&(*it));
+                            finished_processes.push(*it);
+                            dataProcessTmp.erase(it);
                             break; 
+                   
                         }
                     }
                     // Eliminarlo del vector temporal
+                    
                     tmp.erase(tmp.begin());
                 // Comprobar si el deadline termino
                 } else if (remaining_deadline == 0) {
@@ -185,24 +190,24 @@ class RealTime : public ScheduleAlgorithm {
                 Process current = Process::withBurstTime(-1, 0);
                 q.push(current);
             }
-
-            // Eliminar los procesos coleccionados de finished processes en dataProcesses
-            while (!finished_processes.empty()) {
-                Process* finished = finished_processes.front();
-                finished_processes.pop();
-
-                auto it = std::find_if(dataProcess->begin(), dataProcess->end(), [&](const Process& p) {
-                    return p.getProcessID() == finished->getProcessID();
-                });
-
-                if (it != dataProcess->end()) {
-                    dataProcess->erase(it);
-                }
-            }
-
-
             time++;
         }
+
+        // Eliminar los procesos terminados de dataProcess
+        while (!finished_processes.empty()) {
+            Process finished = finished_processes.front();
+            finished_processes.pop();
+            std::cout << "Process: " << finished.getProcessID() << " Remaining Time: " << finished.getRemainingTime() << std::endl;
+
+            auto it = std::find_if(dataProcess->begin(), dataProcess->end(), [&](const Process& p) {
+                return p.getProcessID() == finished.getProcessID();
+            });
+
+            if (it != dataProcess->end()) {
+                dataProcess->erase(it);
+            }
+        }
+
 
         return q;
 

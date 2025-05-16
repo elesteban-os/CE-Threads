@@ -36,6 +36,7 @@ class Flow {
         // Getters
         FlowAlgorithm getAlgorithm() const;
         SignDirection getSignDirection() const;
+        void setSignDirection(SignDirection dir);
 };
 
 // Clase Equity

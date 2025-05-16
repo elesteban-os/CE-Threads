@@ -4,7 +4,8 @@
 class Process {
     private:
         int process_ID;
-        int burst_time;                     
+        int burst_time;   
+        int remaining_time_RR;                     
         int remaining_time;    // Para RR
         int priority;          // Para Priority
         int max_time;          // Para RealTime
@@ -26,6 +27,7 @@ class Process {
         int getProcessID() const;
         int getBurstTime() const;
         int getRemainingTime() const;
+        int getRemainingTime_RR() const;
         int getPriority() const;
         int getMaxTime() const;
         int getDeadline() const;
@@ -36,6 +38,7 @@ class Process {
         void setProcessID(int id);
         void setBurstTime(int time);
         void setRemainingTime(int time);
+        void setRemainingTime_RR(int time);
         void setPriority(int prio);
         void setMaxTime(int time);
         void setDeadline(int time);

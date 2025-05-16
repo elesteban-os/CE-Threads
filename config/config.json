@@ -1,0 +1,31 @@
+{
+    "metodo_control": "FIFO",             
+    
+    "calendarizador": "RR",
+    
+    "parametros": {
+        "largo_cola": 3,
+        "W": 2, 
+        "tiempo_letreto": 1,
+        "quantum": 2          
+    },
+
+    "calle": {                              
+        "largo": 100,                       
+        "velocidad_base": 10          
+    },
+
+    "carros": {                          
+        "izquierda": {                     
+            "normal": 3,                     
+            "deportivo": 2,                   
+            "emergencia": 0                   
+        },
+
+        "derecha": {                        
+            "normal": 4,           
+            "deportivo": 8,
+            "emergencia": 1      
+        }
+    }
+}

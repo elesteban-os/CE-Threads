@@ -13,6 +13,11 @@ SignDirection Flow::getSignDirection() const {
     return signDirection;
 }
 
+void Flow::setSignDirection(SignDirection dir) {
+    this->signDirection = dir;
+}
+
+
 // Implementación de la clase Equity
 Equity::Equity(int W) : Flow(FlowAlgorithm::EQUITY), data{W} {}
 
@@ -56,6 +61,7 @@ int Sign::update() {
 SignData Sign::getData() const {
     return data;
 }
+
 
 // Implementación de la clase FIFO
 FIFO::FIFO() : Flow(FlowAlgorithm::FIFO) {}
