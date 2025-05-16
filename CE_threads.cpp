@@ -54,8 +54,8 @@ int CEthread_create(CEthread_t *thread, void *(*start_routine)(void *), void *ar
  */
 int CEthread_join(CEthread_t *thread) {
     sem_wait(&thread->finished);  // wait until the thread finish
-    sem_destroy(&thread->finished);  // lclean the semaphore
-    std::free(thread->stack); // frees the stack
+    //sem_destroy(&thread->finished);  // lclean the semaphore
+    //std::free(thread->stack); // frees the stack
     return 0;
 }
 

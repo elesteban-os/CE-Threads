@@ -13,6 +13,8 @@ struct ThreadArgs
 {
     Widget* widget;
     SignDirection direction;
+    int threadID;
+    int time;
 };
 
 Q_DECLARE_METATYPE(SignDirection)
@@ -23,6 +25,7 @@ Widget::Widget(QWidget *parent)
 {
     ui->setupUi(this);
     qRegisterMetaType<SignDirection>("SignDirection");
+    qRegisterMetaType<carImageData*>("carImageData*");
 
     /* setear los labels de informacion flujo, calendarizacion y cola */
     scheduleLabel = new QLabel(this);
@@ -58,36 +61,66 @@ Widget::~Widget()
 }
 
 
-void Widget::animateAndWait(SignDirection direction)
+void Widget::animateAndWait(carImageData* carData, int percentage, int time)
 {
-    QRect startRect;
+    QLabel* carLabel = carData->label;
+    QRect* startRect = carData->actualRect;
+    SignDirection direction = carData->direction;
 
-    if (direction == SignDirection::LEFT) {
-        sportCarLabel->setPixmap(sportCarPixmapMirrored);
-        startRect = QRect(980, 310, 141, 101);
-    } else {
-        sportCarLabel->setPixmap(sportCarPixmap);
-        startRect = QRect(30, 310, 141, 101);
-    }
-
-    sportCarLabel->setGeometry(startRect);
-    sportCarLabel->show();
-
-    QPropertyAnimation* anim = new QPropertyAnimation(sportCarLabel, "geometry");
+    QPropertyAnimation* anim = new QPropertyAnimation(carLabel, "geometry");
     anim->setDuration(3000);
     QRect endRect = (direction == SignDirection::RIGHT)
-                    ? startRect.translated(950, 0)
-                    : startRect.translated(-950, 0);
-    anim->setStartValue(startRect);
+                    ? startRect->translated((950 * percentage) / 100, 0)
+                    : startRect->translated((-950 * percentage) / 100, 0);
+    QRect* endRectCpy = new QRect(endRect);
+    anim->setStartValue(*startRect);
     anim->setEndValue(endRect);
 
-    connect(anim, &QPropertyAnimation::finished, [this, anim]() {
-        sportCarLabel->hide();
-        anim->deleteLater();
-        emit animationFinished();  // Señal para desbloquear el hilo
-    });
+    // Eliminar el QLabel cuando el porcentaje llegue a 100
+    if (percentage == 100) {
+        connect(anim, &QPropertyAnimation::finished, [this, carLabel, anim]() {
+            carLabel->deleteLater();
+            anim->deleteLater();
+            emit animationFinished();  // Señal para desbloquear el hilo
+        });
+    } else {
+        connect(anim, &QPropertyAnimation::finished, [this, anim]() {
+            //sportCarLabel->hide();
+            //anim->deleteLater();
+            emit animationFinished();  // Señal para desbloquear el hilo
+        });
+    }
+
+    carData->actualRect = endRectCpy;
 
     anim->start();
+}
+
+carImageData* Widget::addNewCarImage(int carID, SignDirection direction) {
+    QRect* startRect;
+    QLabel* carLabel = new QLabel(this);
+    carLabel->setScaledContents(true);
+    carLabel->resize(141, 101);
+
+    if (direction == SignDirection::LEFT) {
+        carLabel->setPixmap(sportCarPixmapMirrored);
+        startRect = new QRect(980, 310, 141, 101);  // desde la derecha
+    } else {
+        carLabel->setPixmap(sportCarPixmap);
+        startRect = new QRect(30, 310, 141, 101);  // desde la izquierda
+    }
+
+    carLabel->setGeometry(*startRect);
+    carLabel->show();
+
+    // Agregar el nuevo QLabel al vector de carImages
+    carImageData *newCarImage = new carImageData;
+    newCarImage->carID = carID;
+    newCarImage->label = carLabel;
+    newCarImage->direction = direction;
+    newCarImage->actualRect = startRect;
+    carImages.push_back(newCarImage);
+    return newCarImage;
 }
 
 
@@ -97,16 +130,46 @@ void* thread_task(void* arg)
     Widget* widget = args->widget;
     SignDirection direction = args->direction;
 
+    bool found = false;
+    carImageData* newCarImage;
+
+    for (const auto& carImage : widget->carImages) {
+        if (carImage->carID == args->threadID) {
+            found = true;
+            newCarImage = carImage;
+            break;
+        }
+    }
+
     QEventLoop loop;
 
     QObject::connect(widget, &Widget::animationFinished, &loop, &QEventLoop::quit, Qt::QueuedConnection);
 
-    // Llamar a la animación desde el hilo de la GUI
-    QMetaObject::invokeMethod(widget, "animateAndWait",
-                              Qt::QueuedConnection,
-                              Q_ARG(SignDirection, direction));
-    std::cout << "esperando respuesta..."<< std::endl;
-    loop.exec();  // Espera hasta que la animación emita animationFinished
+    if (!found) {
+        // Agregar el nuevo QLabel al vector de carImages
+        // Llamar a la animación desde el hilo de la GUI
+        newCarImage = widget->addNewCarImage(args->threadID, direction);
+        QMetaObject::invokeMethod(widget, "animateAndWait",
+                                  Qt::QueuedConnection,
+                                  Q_ARG(carImageData*, newCarImage),
+                                  Q_ARG(int, 30),
+                                  Q_ARG(int, 1));
+        std::cout << "esperando respuesta..."<< std::endl;
+        loop.exec();  // Espera hasta que la animación emita animationFinished
+        std::cout << "NO" << std::endl;
+
+    } else {
+        // Si el hilo ya existe, animar el QLabel existente
+        std::cout << "SI" << std::endl;
+        // Llamar a la animación desde el hilo de la GUI
+        QMetaObject::invokeMethod(widget, "animateAndWait",
+                                  Qt::QueuedConnection,
+                                  Q_ARG(carImageData*, newCarImage),
+                                  Q_ARG(int, 30),
+                                  Q_ARG(int, 1));
+        std::cout << "esperando respuesta..."<< std::endl;
+        loop.exec();  // Espera hasta que la animación emita animationFinished
+    }
 
     delete args;
     return nullptr;
@@ -160,20 +223,11 @@ void Widget::setActualThreadLabel(int id)
 
 void Widget::on_pushButton_clicked()
 {
-    ProcessManagement pm(ScheduleType::SJF, 3, FlowAlgorithm::SIGN, 3);
+    //ProcessManagement pm(ScheduleType::SJF, 3, FlowAlgorithm::SIGN, 3);
 
-    // // Agregar procesos al lado izquierdo
-    pm.newLeftProcess(Process::withBurstTime(1, 1));
-    pm.newLeftProcess(Process::withBurstTime(2, 2));
-    pm.newLeftProcess(Process::withBurstTime(3, 3));
-
-    // // Agregar procesos al lado derecho
-    pm.newRightProcess(Process::withBurstTime(4, 4));
-    pm.newRightProcess(Process::withBurstTime(5, 5));
-    pm.newRightProcess(Process::withBurstTime(6, 6));
 
     while (true) {
-        ProcessData* data = pm.getData();
+        ProcessData* data = pm->getData();
 
         if (data == nullptr) {
             std::cout << "No hay más procesos para ejecutar." << std::endl;
@@ -225,16 +279,42 @@ void Widget::on_pushButton_clicked()
         }
         std::cout << std::endl;
 
-        ThreadArgs* args = new ThreadArgs{ this, data->direction };
+        ThreadArgs* args = new ThreadArgs{ this, data->direction, data->actualProcess->getProcessID(), 1};
 
         CEthread_t thread;
+
+        std::cout << "Creando thread" << std::endl;
         CEthread_create(&thread, thread_task, args);
+        std::cout << "Thread creado" << std::endl;
         CEthread_join(&thread);
+        std::cout << "Join thread" << std::endl;
 
     }
+    /*
+    for (auto& carImage : carImages) {
+        //carImage->label->deleteLater();
+        delete carImage->actualRect;
+        delete carImage;
+    }
+    carImages.clear();*/
     // ocultar los labels despues de terminar la simulacion
     scheduleLabel->hide();
     flowLabel->hide();
     queueLabel->hide();
     actualThreadLabel->hide();
+}
+
+void Widget::on_pushButton_2_clicked()
+{
+    pm = new ProcessManagement(ScheduleType::SJF, 3, FlowAlgorithm::SIGN, 3);
+
+    // // Agregar procesos al lado izquierdo
+    pm->newLeftProcess(Process::withBurstTime(1, 1));
+    pm->newLeftProcess(Process::withBurstTime(2, 2));
+    pm->newLeftProcess(Process::withBurstTime(3, 3));
+
+    // // Agregar procesos al lado derecho
+    pm->newRightProcess(Process::withBurstTime(4, 4));
+    pm->newRightProcess(Process::withBurstTime(5, 5));
+    pm->newRightProcess(Process::withBurstTime(6, 6));
 }

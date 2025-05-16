@@ -13,6 +13,14 @@
 #include <QApplication>
 #include <QWaitCondition>
 #include <QMutex>
+#include <vector>
+
+struct carImageData {
+    QLabel* label;
+    int carID;
+    SignDirection direction;
+    QRect* actualRect;
+};
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Widget; }
@@ -25,14 +33,19 @@ class Widget : public QWidget
 public:
     Widget(QWidget *parent = nullptr);
     ~Widget();
-    Q_INVOKABLE void animateAndWait(SignDirection direction);
+    Q_INVOKABLE void animateAndWait(carImageData* carData, int percentage, int time);
     void setScheduleTypeLabel(ScheduleType scheduler);
     void setFlowLabel(FlowAlgorithm flowAlgorithm);
     void setQueueLabel(std::queue<int> queue);
     void setActualThreadLabel(int id);
 
+    std::vector<carImageData*> carImages;
+    carImageData* addNewCarImage(int carID, SignDirection direction);
+
 private slots:
     void on_pushButton_clicked();
+
+    void on_pushButton_2_clicked();
 
 private:
     Ui::Widget *ui;
@@ -43,6 +56,7 @@ private:
     QLabel* sportCarLabel = nullptr;
     QPixmap sportCarPixmap;
     QPixmap sportCarPixmapMirrored;
+    ProcessManagement* pm;
 
 signals:
     void animationFinished();
