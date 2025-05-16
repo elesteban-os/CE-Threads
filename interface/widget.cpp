@@ -85,8 +85,6 @@ void Widget::animateAndWait(carImageData* carData, int percentage, int time)
         });
     } else {
         connect(anim, &QPropertyAnimation::finished, [this, anim]() {
-            //sportCarLabel->hide();
-            //anim->deleteLater();
             emit animationFinished();  // Señal para desbloquear el hilo
         });
     }
@@ -290,13 +288,6 @@ void Widget::on_pushButton_clicked()
         std::cout << "Join thread" << std::endl;
 
     }
-    /*
-    for (auto& carImage : carImages) {
-        //carImage->label->deleteLater();
-        delete carImage->actualRect;
-        delete carImage;
-    }
-    carImages.clear();*/
     // ocultar los labels despues de terminar la simulacion
     scheduleLabel->hide();
     flowLabel->hide();
