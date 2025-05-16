@@ -74,7 +74,7 @@ private:
     QPixmap ambulanceCarPixmap;
     QPixmap ambulanceCarPixmapMirrored;
     ProcessManagement* pm = new ProcessManagement(ScheduleType::PRIORITY, 3, FlowAlgorithm::EQUITY, 3, 3, 100);
-    int carID = 7;
+    int carID = 1;
     QComboBox* comboBoxType;
     QComboBox* comboBoxSide;
 
