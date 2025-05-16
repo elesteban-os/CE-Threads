@@ -47,6 +47,7 @@ public:
 
     std::vector<carImageData*> carImages;
     carImageData* addNewCarImage(int carID, SignDirection direction, int typecar);
+    void setSignLabel(SignDirection sd);
 
 private slots:
     void on_pushButton_clicked();
@@ -65,6 +66,7 @@ private:
     QLabel* sportCarLabel = nullptr;
     QLabel* normalCarLabel = nullptr;
     QLabel* ambulanceCarLabel = nullptr;
+    QLabel* signLabel = nullptr;
     QPixmap sportCarPixmap;
     QPixmap sportCarPixmapMirrored;
     QPixmap normalCarPixmap;

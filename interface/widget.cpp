@@ -98,11 +98,24 @@ Widget::Widget(QWidget *parent)
     ambulanceCarLabel->resize(141, 141);
     ambulanceCarLabel->hide();
 
+    signLabel = new QLabel(this);
+    signLabel->setGeometry(510, 220, 71, 61);
+    signLabel->setStyleSheet("color: white; font: 60pt Nimbus Sans Narrow;");
 }
 
 Widget::~Widget()
 {
     delete ui;
+}
+
+void Widget::setSignLabel(SignDirection sd) {
+    QString signText;
+    if (sd == SignDirection::RIGHT) {
+        signText = "→";
+    } else {
+        signText = "←";
+    }
+    signLabel->setText(signText);
 }
 
 void Widget::generateNewCar(){
@@ -111,11 +124,30 @@ void Widget::generateNewCar(){
 
     SignDirection direction = (sideStr == "Izquierda") ? SignDirection::LEFT : SignDirection::RIGHT;
 
+    int base_speed = 10;
+    int burst_time_normal = 100 / base_speed; // 10
+    int burst_time_sport = 100 / (base_speed * 2); // 5
+    int burst_time_emergency = 100 / (base_speed * 4); // 2.5
+    int burst_time;
+    int priority;
+
+    if (carType == "Normal") {
+        burst_time = burst_time_normal;
+        priority = 3;
+    } else if (carType == "Deportivo") {
+        burst_time = burst_time_sport;
+        priority = 2;
+    } else {
+        burst_time = burst_time_emergency;
+        priority = 1;
+    }
+
     if (direction == SignDirection::LEFT) {
-        pm->newLeftProcess(Process::withPriority(carID, 3));
+        pm->newRightProcess(Process(this->carID, burst_time, priority, burst_time * 10, burst_time / 3, priority * this->carID));
+        //pm->newLeftProcess(Process::withBurstTime(carID, 3));
         carID++;
     } else {
-        pm->newRightProcess(Process::withPriority(carID, 3));
+        pm->newLeftProcess(Process(this->carID, burst_time, priority, burst_time * 10, burst_time / 3, priority * this->carID));
         carID++;
     }
     qDebug() << "Carro generado - Tipo:" << carType << "| Lado:" << sideStr << "| ID:" << carID;
@@ -128,7 +160,7 @@ void Widget::animateAndWait(carImageData* carData, int percentage, int time)
     SignDirection direction = carData->direction;
 
     QPropertyAnimation* anim = new QPropertyAnimation(carLabel, "geometry");
-    anim->setDuration(time * 500);
+    anim->setDuration(time * 1000);
     QRect endRect = (direction == SignDirection::RIGHT)
                     ? startRect->translated(((1160 * percentage) / 100) - startRect->x(), 0)
                     : startRect->translated(((-1160 * percentage) / 100) + (980 - startRect->x()), 0);
@@ -375,6 +407,8 @@ void Widget::on_pushButton_clicked()
 
         ThreadArgs* args = new ThreadArgs{ this, data->direction, data->actualProcess->getProcessID(), data->time, data->street_percentage, data->actualProcess->getPriority()};
 
+        setSignLabel(data->direction);
+
         CEthread_t thread;
         CEthread_create(&thread, thread_task, args);
         CEthread_join(&thread);
@@ -397,7 +431,7 @@ void Widget::on_pushButton_clicked()
     queueLabel->hide();
     actualThreadLabel->hide();
 
-    pm = new ProcessManagement(ScheduleType::FCFS, 3, FlowAlgorithm::EQUITY, 3, 3, 100); // volver al default para manual
+    //pm = new ProcessManagement(ScheduleType::PRIORITY, 3, FlowAlgorithm::EQUITY, 3, 3, 100); // volver al default para manual
 }
 
 void Widget::on_pushButton_2_clicked()
