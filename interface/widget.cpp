@@ -9,6 +9,8 @@
 #include <QThread>
 
 // struct para los parametros del thread
+std::atomic<bool> shouldExit = false;
+
 struct ThreadArgs
 {
     Widget* widget;
@@ -20,6 +22,25 @@ struct ThreadArgs
 
 Q_DECLARE_METATYPE(SignDirection)
 
+void Widget::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Q)
+    {
+        qDebug() << "Saliendo del programa por tecla Q...";
+        shouldExit = true;
+        close(); // Esto dispara el evento closeEvent
+    }
+    else if (event->key() == Qt::Key_A) {  // Tecla "A" + verificar que pm existe
+        generateNewCar();
+    }
+}
+
+void Widget::closeEvent(QCloseEvent *event)
+{
+    shouldExit = true; // Reafirma el cierre por seguridad
+    event->accept();
+}
+
 Widget::Widget(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::Widget)
@@ -27,6 +48,9 @@ Widget::Widget(QWidget *parent)
     ui->setupUi(this);
     qRegisterMetaType<SignDirection>("SignDirection");
     qRegisterMetaType<carImageData*>("carImageData*");
+
+    comboBoxType = findChild<QComboBox*>("comboBox");
+    comboBoxSide = findChild<QComboBox*>("comboBox_2");
 
     /* setear los labels de informacion flujo, calendarizacion y cola */
     scheduleLabel = new QLabel(this);
@@ -61,6 +85,21 @@ Widget::~Widget()
     delete ui;
 }
 
+void Widget::generateNewCar(){
+    QString carType = findChild<QComboBox*>("comboBox")->currentText();
+    QString sideStr = findChild<QComboBox*>("comboBox_2")->currentText();
+
+    SignDirection direction = (sideStr == "Izquierda") ? SignDirection::LEFT : SignDirection::RIGHT;
+
+    if (direction == SignDirection::LEFT) {
+        pm->newLeftProcess(Process::withBurstTime(carID, 3));
+        carID++;
+    } else {
+        pm->newRightProcess(Process::withBurstTime(carID, 3));
+        carID++;
+    }
+    qDebug() << "Carro generado - Tipo:" << carType << "| Lado:" << sideStr << "| ID:" << carID;
+}
 
 void Widget::animateAndWait(carImageData* carData, int percentage, int time)
 {
@@ -155,20 +194,16 @@ void* thread_task(void* arg)
                                   Q_ARG(carImageData*, newCarImage),
                                   Q_ARG(int, percentage),
                                   Q_ARG(int, time));
-        std::cout << "esperando respuesta..."<< std::endl;
         loop.exec();  // Espera hasta que la animación emita animationFinished
-        std::cout << "NO" << std::endl;
 
     } else {
         // Si el hilo ya existe, animar el QLabel existente
-        std::cout << "SI" << std::endl;
         // Llamar a la animación desde el hilo de la GUI
         QMetaObject::invokeMethod(widget, "animateAndWait",
                                   Qt::QueuedConnection,
                                   Q_ARG(carImageData*, newCarImage),
                                   Q_ARG(int, percentage),
                                   Q_ARG(int, time));
-        std::cout << "esperando respuesta..."<< std::endl;
         loop.exec();  // Espera hasta que la animación emita animationFinished
     }
 
@@ -302,12 +337,12 @@ void Widget::on_pushButton_clicked()
         ThreadArgs* args = new ThreadArgs{ this, data->direction, data->actualProcess->getProcessID(), data->time, data->street_percentage};
 
         CEthread_t thread;
-
-        std::cout << "Creando thread" << std::endl;
         CEthread_create(&thread, thread_task, args);
-        std::cout << "Thread creado" << std::endl;
         CEthread_join(&thread);
-        std::cout << "Join thread" << std::endl;
+
+        if (shouldExit) {
+            break;
+        }
 
     }
     for (auto& carImage : carImages) {
@@ -322,6 +357,8 @@ void Widget::on_pushButton_clicked()
     flowLabel->hide();
     queueLabel->hide();
     actualThreadLabel->hide();
+
+    pm = new ProcessManagement(ScheduleType::FCFS, 3, FlowAlgorithm::EQUITY, 3, 3, 100); // volver al default para manual
 }
 
 void Widget::on_pushButton_2_clicked()

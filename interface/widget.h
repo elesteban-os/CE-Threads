@@ -17,6 +17,9 @@
 #include <vector>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QComboBox>
+
+extern std::atomic<bool> shouldExit;
 
 struct carImageData {
     QLabel* label;
@@ -50,6 +53,9 @@ private slots:
 
     void on_pushButton_2_clicked();
 
+public slots:
+    void generateNewCar();
+
 private:
     Ui::Widget *ui;
     QLabel* scheduleLabel = nullptr;
@@ -59,9 +65,16 @@ private:
     QLabel* sportCarLabel = nullptr;
     QPixmap sportCarPixmap;
     QPixmap sportCarPixmapMirrored;
-    ProcessManagement* pm;
+    ProcessManagement* pm = new ProcessManagement(ScheduleType::FCFS, 3, FlowAlgorithm::EQUITY, 3, 3, 100);
+    int carID = 7;
+    QComboBox* comboBoxType;
+    QComboBox* comboBoxSide;
 
 signals:
     void animationFinished();
+
+protected:
+    void keyPressEvent(QKeyEvent *event) override;
+    void closeEvent(QCloseEvent *event) override;
 };
 #endif // WIDGET_H

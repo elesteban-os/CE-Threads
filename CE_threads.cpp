@@ -74,9 +74,7 @@ int CEthread_create(CEthread_t *thread, void *(*start_routine)(void *), void *ar
  * CE_thread function to wait the end of a thread execution and then clean resources
  */
 int CEthread_join(CEthread_t *thread) {
-    std::cout << "antes" << std::endl;
     sem_wait(&thread->finished);  // wait until the thread finish
-    std::cout << "despues" << std::endl;
     //sem_destroy(&thread->finished);  // lclean the semaphore
     //std::free(thread->stack); // frees the stack
     return 0;

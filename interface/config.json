@@ -1,7 +1,7 @@
 {
     "metodo_control": "FIFO",             
     
-    "calendarizador": "RR",
+    "calendarizador": "Real Time",
     
     "parametros": {
         "largo_cola": 3,
