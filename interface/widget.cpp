@@ -297,15 +297,121 @@ void Widget::on_pushButton_clicked()
 
 void Widget::on_pushButton_2_clicked()
 {
-    pm = new ProcessManagement(ScheduleType::SJF, 3, FlowAlgorithm::SIGN, 3);
+    Configuration config;
+    try
+    {
+        QString fileName = QFileDialog::getOpenFileName(this, "Select a File", "", "Text Files (*.json);;All Files (*)");
 
-    // // Agregar procesos al lado izquierdo
-    pm->newLeftProcess(Process::withBurstTime(1, 1));
-    pm->newLeftProcess(Process::withBurstTime(2, 2));
-    pm->newLeftProcess(Process::withBurstTime(3, 3));
+        if (!fileName.isEmpty()) {
+            QMessageBox::information(this, "File Selected", "You selected:\n" + fileName);
+        }
+        std::string fileNameqrst = fileName.toStdString();
+        config = read_configuration(fileNameqrst);
+    }
+    catch(const exception& e)
+    {
+        cerr << "Error: " << e.what() << endl;
+    }
 
-    // // Agregar procesos al lado derecho
-    pm->newRightProcess(Process::withBurstTime(4, 4));
-    pm->newRightProcess(Process::withBurstTime(5, 5));
-    pm->newRightProcess(Process::withBurstTime(6, 6));
+    // Tipo calendarizacion
+    ScheduleType schedule_type;
+    if (config.calendarizer == "FCFS") {
+        schedule_type = ScheduleType::FCFS;
+    } else if (config.calendarizer == "SJF") {
+        schedule_type = ScheduleType::SJF;
+    } else if (config.calendarizer == "RR") {
+        schedule_type = ScheduleType::RR;
+    } else if (config.calendarizer == "Prioridad") {
+        schedule_type = ScheduleType::PRIORITY;
+    } else if (config.calendarizer == "Real Time") {
+        schedule_type = ScheduleType::REALTIME;
+    } else {
+        cerr << "Error: Unknown calendarizer type '" << config.calendarizer << "'" << endl;
+        return;
+    }
+
+    // Tamanio de la cola
+    int queue_size = config.parameters.queue_size;
+
+    // Algoritmo de flujo
+    FlowAlgorithm flow_algorithm;
+    if (config.control_method == "Equidad") {
+        flow_algorithm = FlowAlgorithm::EQUITY;
+    } else if (config.control_method == "Letrero") {
+        flow_algorithm = FlowAlgorithm::SIGN;
+    } else if (config.control_method == "FIFO") {
+        flow_algorithm = FlowAlgorithm::FIFO;
+    } else {
+        cerr << "Error: Unknown flow algorithm type '" << config.control_method << "'" << endl;
+        return;
+    }
+
+    // Atributo compartido (W o Time)
+    int flattr;
+    if (flow_algorithm == FlowAlgorithm::EQUITY) {
+        flattr = config.parameters.w_param;
+    } else {
+        flattr = config.parameters.sign_time;
+    }
+
+    int quantum = config.parameters.quantum;
+
+    // Crear una instancia de ProcessManagement
+    int street = config.street.size;
+    pm = new ProcessManagement(schedule_type, queue_size, flow_algorithm, flattr, quantum, street);
+
+    // Diferentes burst times:
+    // y = mx
+    // d = vt
+    // t = d / v
+
+    int base_speed = config.street.base_speed;
+    int burst_time_normal = street / base_speed; // 10
+    int burst_time_sport = street / (base_speed * 2); // 5
+    int burst_time_emergency = street / (base_speed * 4); // 2.5
+
+    // Agregar procesos al lado izquierdo
+    // Prueba SJF
+    // Agregar carros alternando el tipo
+    int car_id = 1;
+    int leftPeriod = 3;
+    while (config.left.normal > 0 || config.left.deportive > 0 || config.left.emergency > 0) {
+        if (config.left.normal > 0) {
+            pm->newLeftProcess(Process(car_id++, burst_time_normal, 3, burst_time_normal * 20, burst_time_normal / 10, leftPeriod));
+            config.left.normal--;
+            leftPeriod += 3;
+        }
+        if (config.left.deportive > 0) {
+            pm->newLeftProcess(Process(car_id++, burst_time_sport, 2, burst_time_sport * 18, burst_time_sport / 6, leftPeriod));
+            config.left.deportive--;
+            leftPeriod += 6;
+        }
+        if (config.left.emergency > 0) {
+            pm->newLeftProcess(Process(car_id++, burst_time_emergency, 1, burst_time_emergency * 16, burst_time_emergency / 3, leftPeriod));
+            config.left.emergency--;
+            leftPeriod += 9;
+        }
+    }
+
+    // Agregar procesos al lado derecho
+    // Prueba SJF
+    // Agregar carros alternando el tipo
+    int rightPeriod = 1;
+    while (config.right.normal > 0 || config.right.deportive > 0 || config.right.emergency > 0) {
+        if (config.right.normal > 0) {
+            pm->newRightProcess(Process(car_id++, burst_time_normal, 3, burst_time_normal * 10, burst_time_normal / 3, rightPeriod));
+            config.right.normal--;
+            rightPeriod += 3;
+        }
+        if (config.right.deportive > 0) {
+            pm->newRightProcess(Process(car_id++, burst_time_sport, 2, burst_time_sport * 6, burst_time_sport / 3, rightPeriod));
+            config.right.deportive--;
+            rightPeriod += 6;
+        }
+        if (config.right.emergency > 0) {
+            pm->newRightProcess(Process(car_id++, burst_time_emergency, 1, burst_time_emergency * 4, burst_time_emergency / 3, rightPeriod));
+            config.right.emergency--;
+            rightPeriod += 9;
+        }
+    }
 }

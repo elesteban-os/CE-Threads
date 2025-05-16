@@ -5,6 +5,7 @@
 #include "../schedulers/scheduler.h"
 #include "../processmanagement.h"
 #include "../CE_threads.h"
+#include "../config/config_loader.h"
 
 #include <QWidget>
 #include <QLabel>
@@ -14,6 +15,8 @@
 #include <QWaitCondition>
 #include <QMutex>
 #include <vector>
+#include <QMessageBox>
+#include <QFileDialog>
 
 struct carImageData {
     QLabel* label;

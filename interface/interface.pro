@@ -23,7 +23,9 @@ SOURCES += \
     ../schedulers/scheduler.cpp \
     ../schedulers/schedulealgorithms.cpp \
     ../schedulers/process.cpp \
-    ../CE_threads.cpp
+    ../CE_threads.cpp \
+    ../config/config_loader.cpp
+
 
 
 HEADERS += \
@@ -33,7 +35,8 @@ HEADERS += \
     ../schedulers/scheduler.h \
     ../schedulers/schedulealgorithms.h \
     ../schedulers/process.h \
-    ../CE_threads.h
+    ../CE_threads.h \
+    ../config/config_loader.h
 
 FORMS += \
     widget.ui
